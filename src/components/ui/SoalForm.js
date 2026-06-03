@@ -71,19 +71,23 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
         fetch("/api/kelas").then((r) => r.json()),
       ]);
 
-      setGuruOptions([
-        { value: "", label: "-- Pilih Guru --" },
-        ...(Array.isArray(guruRes) ? guruRes : []).map((g) => ({
-          value: g.id.toString(),
-          label: g.nama,
-        })),
-      ]);
       setMapelOptions([
         { value: "", label: "-- Pilih Mapel --" },
-        ...(Array.isArray(mapelRes) ? mapelRes : []).map((m) => ({
-          value: m.id.toString(),
-          label: m.nama,
-        })),
+        ...(Array.isArray(mapelRes) ? mapelRes : [])
+          .sort((a, b) => a.nama.localeCompare(b.nama))
+          .map((m) => ({
+            value: m.id.toString(),
+            label: m.nama,
+          })),
+      ]);
+      setGuruOptions([
+        { value: "", label: "-- Pilih Guru --" },
+        ...(Array.isArray(guruRes) ? guruRes : [])
+          .sort((a, b) => a.nama.localeCompare(b.nama))
+          .map((g) => ({
+            value: g.id.toString(),
+            label: g.nama,
+          })),
       ]);
       setKelasOptions([
         { value: "", label: "-- Pilih Kelas --" },
@@ -161,17 +165,17 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
       {/* Top Meta Section */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-6 border-b border-gray-200">
         <Select
-          label="Guru"
-          value={formData.id_guru}
-          onChange={(e) => handleChange("id_guru", e.target.value)}
-          options={guruOptions}
-          required
-        />
-        <Select
           label="Mapel"
           value={formData.id_mapel}
           onChange={(e) => handleChange("id_mapel", e.target.value)}
           options={mapelOptions}
+          required
+        />
+        <Select
+          label="Guru"
+          value={formData.id_guru}
+          onChange={(e) => handleChange("id_guru", e.target.value)}
+          options={guruOptions}
           required
         />
         <Select

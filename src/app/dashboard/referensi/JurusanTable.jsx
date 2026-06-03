@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DataTable, Button, Modal, Input, ConfirmDialog } from "@/components/ui";
+import {
+  DataTable,
+  Button,
+  Modal,
+  Input,
+  ConfirmDialog,
+} from "@/components/ui";
 
 export default function JurusanTable() {
   const [data, setData] = useState([]);
@@ -9,7 +15,7 @@ export default function JurusanTable() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
-  
+
   const initialForm = { nama: "" };
   const [formData, setFormData] = useState(initialForm);
   const [isEdit, setIsEdit] = useState(false);
@@ -35,8 +41,8 @@ export default function JurusanTable() {
     if (item) {
       setIsEdit(true);
       setSelectedId(item.id);
-      setFormData({ 
-        nama: item.jurusan
+      setFormData({
+        nama: item.jurusan,
       });
     } else {
       setIsEdit(false);
@@ -90,12 +96,16 @@ export default function JurusanTable() {
       width: "120px",
       render: (row) => (
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={() => handleOpenModal(row)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => handleOpenModal(row)}
+          >
             Edit
           </Button>
-          <Button 
-            size="sm" 
-            variant="danger" 
+          <Button
+            size="sm"
+            variant="danger"
             onClick={() => {
               setSelectedId(row.id);
               setIsConfirmOpen(true);
@@ -111,31 +121,35 @@ export default function JurusanTable() {
   return (
     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
       <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">Program Keahlian / Jurusan</h2>
+        <h2 className="text-xl font-bold text-gray-900">Data Jurusan</h2>
       </div>
 
-      <DataTable 
-        columns={columns} 
-        data={data} 
-        isLoading={loading} 
-        onAdd={() => handleOpenModal()} 
+      <DataTable
+        columns={columns}
+        data={data}
+        isLoading={loading}
+        onAdd={() => handleOpenModal()}
       />
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         title={isEdit ? "Edit Jurusan" : "Tambah Jurusan"}
       >
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Input 
-            label="Nama Jurusan" 
+          <Input
+            label="Nama Jurusan"
             value={formData.nama}
-            onChange={(e) => setFormData({...formData, nama: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
             required
             placeholder="Contoh: Teknik Komputer dan Jaringan"
           />
           <div className="flex justify-end gap-2 mt-4">
-            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsModalOpen(false)}
+            >
               Batal
             </Button>
             <Button type="submit" variant="primary">
@@ -145,7 +159,7 @@ export default function JurusanTable() {
         </form>
       </Modal>
 
-      <ConfirmDialog 
+      <ConfirmDialog
         isOpen={isConfirmOpen}
         title="Hapus Data"
         message="Apakah Anda yakin ingin menghapus jurusan ini?"
