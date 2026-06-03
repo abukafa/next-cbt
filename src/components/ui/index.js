@@ -340,7 +340,7 @@ export function DataTable({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                  className={`px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 select-none ${col.className || ""}`}
                   style={{ width: col.width }}
                   onClick={() => requestSort(col.key)}
                 >
@@ -375,7 +375,7 @@ export function DataTable({
                   {columns.map((col) => (
                     <td
                       key={`${idx}-${col.key}`}
-                      className="px-6 py-4 text-sm text-gray-900"
+                      className={`px-6 py-4 text-sm text-gray-900 ${col.className || ""}`}
                     >
                       {col.render ? col.render(row) : row[col.key]}
                     </td>

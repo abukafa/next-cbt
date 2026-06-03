@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronDown,
   Clock,
+  GraduationCap,
 } from "lucide-react";
 
 /**
@@ -72,7 +73,7 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
   ];
 
   // Filter menu based on role
-  const filteredMenuItems = menuItems.filter(item => {
+  const filteredMenuItems = menuItems.filter((item) => {
     if (userRole === "siswa") {
       // Siswa only sees Dashboard (Beranda) and Jadwal Ujian
       return item.id === "dashboard" || item.id === "jadwal-ujian";
@@ -120,7 +121,9 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
         <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CBT</span>
+              <span className="text-white font-bold text-sm">
+                <GraduationCap size={20} />
+              </span>
             </div>
             <span className="text-lg font-bold text-gray-900">CBT System</span>
           </div>
@@ -200,8 +203,8 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
 
         {/* Footer */}
         <div className="border-t border-gray-200 p-4">
-          <button 
-            onClick={() => signOut({ callbackUrl: '/login' })}
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
             className="w-full flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
           >
             <LogOut size={20} />
@@ -313,17 +316,26 @@ export function TopBar({ onMenuClick, userName = "User" }) {
           ) : (
             <div className="mt-6 w-full max-w-sm space-y-4 text-left">
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm">
-                <div className="grid grid-cols-3 gap-2 py-1 border-b border-gray-200">
+                <div className="grid grid-cols-3 gap-2 py-2 border-b border-gray-200">
                   <span className="text-gray-500">Tipe Akun</span>
                   <span className="col-span-2 font-medium capitalize">
                     {profileData?.role || "-"}
                   </span>
                 </div>
-                
+
                 {profileData?.role === "admin" && (
-                  <div className="mt-2 text-center text-gray-600 italic">
-                    {profileData?.info || "Administrator Account"}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-3 gap-2 py-2 border-b border-gray-200">
+                      <span className="text-gray-500">Peran</span>
+                      <span className="col-span-2 font-medium">
+                        Administrator
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 py-2 border-gray-200">
+                      <span className="text-gray-500">Akses</span>
+                      <span className="col-span-2 font-medium">Seperuser</span>
+                    </div>
+                  </>
                 )}
 
                 {profileData?.role === "guru" && profileData.detail && (
@@ -352,24 +364,32 @@ export function TopBar({ onMenuClick, userName = "User" }) {
                       </span>
                     </div>
                     <div className="grid grid-cols-3 gap-2 py-2 border-b border-gray-200">
+                      <span className="text-gray-500">Nama</span>
+                      <span className="col-span-2 font-medium">
+                        {profileData.detail.nama}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 py-2 border-gray-200">
                       <span className="text-gray-500">Kelas</span>
                       <span className="col-span-2 font-medium">
                         {profileData.detail.kelas?.nama_kelas || "-"}
                       </span>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 py-2 border-b border-gray-200">
-                      <span className="text-gray-500">Jurusan</span>
-                      <span className="col-span-2 font-medium">
-                        {profileData.detail.jurusan?.nama_jurusan || "-"}
-                      </span>
-                    </div>
                   </>
                 )}
               </div>
-              
+
               <div className="mt-6 flex justify-end gap-2">
-                <Button variant="secondary" onClick={() => setShowProfileModal(false)}>Tutup</Button>
-                <Button variant="danger" onClick={() => signOut({ callbackUrl: '/login' })}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowProfileModal(false)}
+                >
+                  Tutup
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                >
                   Logout
                 </Button>
               </div>
@@ -392,7 +412,11 @@ export function DashboardLayout({ children }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} userRole={session?.user?.role} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        userRole={session?.user?.role}
+      />
 
       {/* Main Content */}
       <div className="md:ml-64 flex flex-col min-h-screen print:ml-0 print:bg-white">
@@ -403,7 +427,9 @@ export function DashboardLayout({ children }) {
         />
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-6 print:p-0 print:m-0">{children}</main>
+        <main className="flex-1 p-4 md:p-6 print:p-0 print:m-0">
+          {children}
+        </main>
 
         {/* Footer */}
         <footer className="bg-white border-t border-gray-200 px-6 py-4 text-center text-sm text-gray-600 print:hidden">

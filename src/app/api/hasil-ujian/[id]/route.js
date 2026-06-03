@@ -37,27 +37,20 @@ export async function GET(request, { params }) {
       orderBy: { nilai: "desc" }
     });
 
-    // Get Admin IDs
-    const adminIds = participantsRaw.map(p => p.id_user);
-    const admins = await prisma.admin.findMany({
-      where: { id: { in: adminIds } }
-    });
-
-    // Get Siswa kon_ids
-    const konIds = admins.map(a => a.kon_id).filter(Boolean);
+    // Get Siswa IDs directly (id_user in tr_ikut_ujian is actually m_siswa.id)
+    const siswaIds = participantsRaw.map(p => p.id_user);
     const siswas = await prisma.siswa.findMany({
-      where: { id: { in: konIds } }
+      where: { id: { in: siswaIds } }
     });
 
     // Merge participant data
     const participants = participantsRaw.map(p => {
-      const admin = admins.find(a => a.id === p.id_user);
-      const siswa = admin ? siswas.find(s => s.id === admin.kon_id) : null;
+      const siswa = siswas.find(s => s.id === p.id_user);
       
       return {
         id_ikut_ujian: p.id,
         id_user: p.id_user,
-        nama: siswa?.nama || admin?.nama || "Unknown",
+        nama: siswa?.nama || "Unknown",
         nim: siswa?.nim || "-",
         kelas: siswa?.jurusan || "-",
         tgl_mulai: p.tgl_mulai,
@@ -123,17 +116,35 @@ export async function POST(request, { params }) {
     } 
     
     if (action === "paksa_selesai") {
-      if (ikut.status === "Y") {
+      if (ikut.status === "N") {
         return NextResponse.json({ error: "Ujian sudah selesai" }, { status: 400 });
       }
 
       // Re-calculate Score
       let jawaban = {};
       let soalIds = [];
-      try {
-        jawaban = JSON.parse(ikut.list_jawaban || "{}");
-        soalIds = JSON.parse(ikut.list_soal || "[]");
-      } catch (e) {}
+      
+      if (ikut.list_soal) {
+        if (ikut.list_soal.trim().startsWith("[")) {
+          try { soalIds = JSON.parse(ikut.list_soal); } catch(e){}
+        } else {
+          soalIds = ikut.list_soal.split(",").map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+        }
+      }
+
+      if (ikut.list_jawaban) {
+        if (ikut.list_jawaban.trim().startsWith("{")) {
+          try { jawaban = JSON.parse(ikut.list_jawaban); } catch(e){}
+        } else {
+          const pairs = ikut.list_jawaban.split(",");
+          for (const p of pairs) {
+            const parts = p.split(":");
+            if (parts.length >= 2) {
+              jawaban[parts[0]] = parts[1];
+            }
+          }
+        }
+      }
 
       const kunciSoal = await prisma.soal.findMany({
         where: { id: { in: soalIds } },
@@ -162,7 +173,7 @@ export async function POST(request, { params }) {
           jml_benar: jml_benar,
           nilai: nilaiAkhir,
           nilai_bobot: bobot_didapat,
-          status: "Y"
+          status: "N" // Legacy CBT 'N' means FINISHED
         }
       });
       return NextResponse.json({ success: true, message: "Ujian dipaksa selesai" });

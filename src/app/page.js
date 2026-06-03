@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui";
 import { useSession } from "next-auth/react";
+import { GraduationCap } from "lucide-react";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -15,7 +16,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CBT</span>
+              <span className="text-white">
+                <GraduationCap size={20} />
+              </span>
             </div>
             <span className="text-lg font-bold text-gray-900">CBT System</span>
           </div>
@@ -50,18 +53,32 @@ export default function Home() {
 
         <div className="flex gap-4 justify-center flex-wrap">
           {!isAuthenticated && (
-            <Link href="/login">
-              <Button variant="primary" size="lg">
-                Mulai Sekarang
-              </Button>
-            </Link>
+            <>
+              <Link href="/login">
+                <Button variant="primary" size="lg">
+                  Mulai Sekarang
+                </Button>
+              </Link>
+              <Link href="https://wa.me/6289655176270" target="_blank">
+                <Button variant="secondary" size="lg">
+                  Konsultasi Gratis
+                </Button>
+              </Link>
+            </>
           )}
           {isAuthenticated && (
-            <Link href="/dashboard">
-              <Button variant="secondary" size="lg">
-                Lihat Dashboard
-              </Button>
-            </Link>
+            <>
+              <Link href="/login">
+                <Button variant="primary" size="lg">
+                  Mulai Sekarang
+                </Button>
+              </Link>
+              <Link href="/dashboard">
+                <Button variant="secondary" size="lg">
+                  Lihat Dashboard
+                </Button>
+              </Link>
+            </>
           )}
         </div>
 

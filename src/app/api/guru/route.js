@@ -12,11 +12,26 @@ export async function GET() {
       whereClause.id = parseInt(session.user.kon_id);
     }
 
-    const data = await prisma.guru.findMany({
+    const gurus = await prisma.guru.findMany({
       where: whereClause,
-      orderBy: { id: "desc" },
+      orderBy: { nama: "asc" },
     });
-    return NextResponse.json(data);
+
+    const guruUsers = await prisma.admin.findMany({
+      where: { level: "guru" },
+      select: { kon_id: true, username: true },
+    });
+
+    // Create a set of kon_id for fast lookup
+    const userMap = new Map(guruUsers.map(u => [u.kon_id, u.username]));
+
+    const result = gurus.map(g => ({
+      ...g,
+      hasUser: userMap.has(g.id),
+      username: userMap.get(g.id) || null
+    }));
+
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch data" },

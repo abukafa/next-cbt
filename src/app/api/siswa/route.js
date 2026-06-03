@@ -3,10 +3,25 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const data = await prisma.siswa.findMany({
-      orderBy: { id: "desc" },
+    const students = await prisma.siswa.findMany({
+      orderBy: { nama: "asc" },
     });
-    return NextResponse.json(data);
+
+    const studentUsers = await prisma.admin.findMany({
+      where: { level: "siswa" },
+      select: { kon_id: true, username: true },
+    });
+
+    // Create a set of kon_id for fast lookup
+    const userMap = new Map(studentUsers.map(u => [u.kon_id, u.username]));
+
+    const result = students.map(s => ({
+      ...s,
+      hasUser: userMap.has(s.id),
+      username: userMap.get(s.id) || null
+    }));
+
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch data" },

@@ -10,8 +10,9 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = parseInt(session.user.id);
+    // In legacy CBT, id_user for students in tr_ikut_ujian is their kon_id (m_siswa.id)
     const kon_id = parseInt(session.user.kon_id);
+    const userId = kon_id; // Using kon_id as id_user for students
     const body = await request.json();
     const { id_tes, token } = body;
 
@@ -62,8 +63,8 @@ export async function POST(request) {
     });
 
     if (existing) {
-      // If already finished
-      if (existing.status === "Y") {
+      // In legacy CBT: 'N' means FINISHED, 'Y' means TAKING EXAM
+      if (existing.status === "N") {
         return NextResponse.json({ error: "Anda sudah menyelesaikan ujian ini." }, { status: 403 });
       }
       
@@ -114,25 +115,25 @@ export async function POST(request) {
     // Take only the required number of questions
     const selectedSoal = shuffledSoal.slice(0, tes.jumlah_soal).map(s => s.id);
     
-    // Convert to JSON String for list_soal
-    const list_soal_json = JSON.stringify(selectedSoal);
-    // list_jawaban will be an empty object {} initially
-    const list_jawaban_json = JSON.stringify({});
+    // Convert to legacy string format for list_soal
+    const list_soal_str = selectedSoal.join(",");
+    // list_jawaban initialized as "id::N,id::N" (Empty answer, Not ragu)
+    const list_jawaban_str = selectedSoal.map(id => `${id}::N`).join(",");
 
     // 8. Create the record in tr_ikut_ujian
     const newIkutUjian = await prisma.trIkutUjian.create({
       data: {
         id_tes: id_tes,
         id_user: userId,
-        list_soal: list_soal_json,
-        list_jawaban: list_jawaban_json,
+        list_soal: list_soal_str,
+        list_jawaban: list_jawaban_str,
         jml_benar: 0,
         nilai: 0,
         nilai_bobot: 0,
         tgl_mulai: now,
         // Calculate tgl_selesai based on tgl_mulai + waktu (minutes)
         tgl_selesai: new Date(now.getTime() + tes.waktu * 60000), 
-        status: "N" // N means Not finished, Y means finished
+        status: "Y" // In legacy CBT: 'Y' means TAKING EXAM, 'N' means FINISHED
       }
     });
 

@@ -190,7 +190,7 @@ export default function DetailHasilUjianPage({ params }) {
                           <div className="text-xs text-gray-500">{p.nim} • Kls {p.kelas}</div>
                         </td>
                         <td className="px-6 py-4 print:px-2 print:py-2">
-                          {p.status === "Y" ? (
+                          {p.status === "N" ? (
                             <span className="inline-flex items-center gap-1.5 bg-emerald-100 print:bg-transparent text-emerald-700 px-2.5 py-1 rounded-full text-xs font-bold">
                               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full print:hidden"></span> Selesai
                             </span>
@@ -204,10 +204,10 @@ export default function DetailHasilUjianPage({ params }) {
                           {new Date(p.tgl_mulai).toLocaleTimeString("id-ID", {hour: '2-digit', minute:'2-digit'})} WIB
                         </td>
                         <td className="px-6 py-4 print:px-2 print:py-2 text-center font-medium text-gray-700">
-                          {p.status === "Y" ? p.jml_benar : "-"}
+                          {p.status === "N" ? p.jml_benar : "-"}
                         </td>
                         <td className="px-6 py-4 print:px-2 print:py-2 text-center font-bold text-lg print:text-sm">
-                          {p.status === "Y" ? (
+                          {p.status === "N" ? (
                             <span className={p.nilai >= 70 ? 'text-emerald-600' : 'text-red-600'}>
                               {parseFloat(p.nilai).toFixed(1)}
                             </span>
@@ -217,7 +217,7 @@ export default function DetailHasilUjianPage({ params }) {
                         </td>
                         <td className="px-6 py-4 text-right print:hidden">
                           <div className="flex items-center justify-end gap-2">
-                            {p.status === "N" && (
+                            {p.status === "Y" && (
                               <button
                                 onClick={() => handleAction('paksa_selesai', p.id_ikut_ujian, p.nama)}
                                 disabled={processingId === p.id_ikut_ujian}
