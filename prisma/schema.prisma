@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id       Int           @id @default(autoincrement())
+  username String        @db.VarChar(100)
+  password String        @db.VarChar(100)
+  level    m_admin_level
+  kon_id   Int
+
+  @@index([kon_id], map: "kon_id")
+  @@map("m_admin")
+}
+
+model Guru {
+  id   Int    @id @default(autoincrement())
+  nip  String @db.VarChar(30)
+  nama String @db.VarChar(100)
+
+  @@map("m_guru")
+}
+
+model Jurusan {
+  id      Int    @id @default(autoincrement())
+  jurusan String @db.VarChar(200)
+
+  @@map("m_jurusan")
+}
+
+model Kelas {
+  id    Int    @id @default(autoincrement())
+  kelas String @db.VarChar(200)
+
+  @@map("m_kelas")
+}
+
+model Mapel {
+  id   Int    @id @default(autoincrement())
+  nama String @db.VarChar(100)
+
+  @@map("m_mapel")
+}
+
+model Siswa {
+  id         Int    @id @default(autoincrement())
+  nama       String @db.VarChar(100)
+  nim        String @db.VarChar(50)
+  jurusan    String @db.VarChar(50)
+  id_jurusan String @db.VarChar(100)
+
+  @@map("m_siswa")
+}
+
+model Soal {
+  id        Int      @id @default(autoincrement())
+  id_guru   Int
+  id_mapel  Int
+  id_kelas  Int
+  bobot     Int
+  file      String   @db.VarChar(150)
+  tipe_file String   @db.VarChar(50)
+  soal      String   @db.LongText
+  opsi_a    String   @db.LongText
+  opsi_b    String   @db.LongText
+  opsi_c    String   @db.LongText
+  opsi_d    String   @db.LongText
+  opsi_e    String   @db.LongText
+  jawaban   String   @db.VarChar(5)
+  tgl_input DateTime @db.DateTime(0)
+  jml_benar Int
+  jml_salah Int
+
+  @@index([id_guru], map: "id_guru")
+  @@index([id_kelas], map: "id_kelas")
+  @@index([id_mapel], map: "id_mapel")
+  @@map("m_soal")
+}
+
+model TrGuruMapel {
+  id       Int @id @default(autoincrement())
+  id_guru  Int
+  id_mapel Int
+
+  @@index([id_guru], map: "id_guru")
+  @@index([id_mapel], map: "id_mapel")
+  @@map("tr_guru_mapel")
+}
+
+model TrGuruTes {
+  id          Int               @id @default(autoincrement())
+  id_guru     Int
+  id_mapel    Int
+  nama_ujian  String            @db.VarChar(200)
+  jumlah_soal Int
+  kelas       String            @db.VarChar(200)
+  jurusan     String            @db.VarChar(200)
+  waktu       Int
+  jenis       tr_guru_tes_jenis
+  detil_jenis String            @db.VarChar(500)
+  tgl_mulai   DateTime          @db.DateTime(0)
+  terlambat   DateTime          @db.DateTime(0)
+  token       String            @db.VarChar(5)
+
+  @@index([id_guru], map: "id_guru")
+  @@index([id_mapel], map: "id_mapel")
+  @@map("tr_guru_tes")
+}
+
+model TrIkutUjian {
+  id           Int                  @id @default(autoincrement())
+  id_tes       Int
+  id_user      Int
+  list_soal    String               @db.LongText
+  list_jawaban String               @db.LongText
+  jml_benar    Int
+  nilai        Decimal              @db.Decimal(10, 2)
+  nilai_bobot  Decimal              @db.Decimal(10, 2)
+  tgl_mulai    DateTime             @db.DateTime(0)
+  tgl_selesai  DateTime             @db.DateTime(0)
+  status       tr_ikut_ujian_status
+
+  @@index([id_tes], map: "id_tes")
+  @@index([id_user], map: "id_user")
+  @@map("tr_ikut_ujian")
+}
+
+enum m_admin_level {
+  admin
+  guru
+  siswa
+}
+
+enum tr_guru_tes_jenis {
+  acak
+  set
+}
+
+enum tr_ikut_ujian_status {
+  Y
+  N
+}
