@@ -321,6 +321,8 @@ export default function UjianPage() {
         data={data}
         isLoading={loading}
         onAdd={() => handleOpenModal()}
+        searchable={true}
+        pagination={true}
       />
 
       <Modal

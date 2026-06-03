@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Input, Select, Button } from "@/components/ui";
+import { useSession } from "next-auth/react";
 import "react-quill-new/dist/quill.snow.css";
 
 // Prevent SSR issues with React Quill
@@ -29,6 +30,11 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
   const [guruOptions, setGuruOptions] = useState([]);
   const [mapelOptions, setMapelOptions] = useState([]);
   const [kelasOptions, setKelasOptions] = useState([]);
+  const [guruMapelRelations, setGuruMapelRelations] = useState([]);
+
+  const { data: session } = useSession();
+  const userRole = session?.user?.role;
+  const userKonId = parseInt(session?.user?.kon_id);
 
   const [formData, setFormData] = useState({
     id_guru: "",
@@ -44,32 +50,74 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
     jawaban: "A",
   });
 
+  const [fileAttachments, setFileAttachments] = useState({
+    soal: "",
+    opsi_a: "",
+    opsi_b: "",
+    opsi_c: "",
+    opsi_d: "",
+    opsi_e: "",
+  });
+
+  const parseLegacyText = (rawStr) => {
+    if (!rawStr) return { text: "", file: "" };
+    const parts = rawStr.split("#####");
+    return {
+      text: parts[0] || "",
+      file: parts.length > 1 ? parts[1] : "",
+    };
+  };
+
   useEffect(() => {
     fetchOptions();
     if (initialData) {
+      const pSoal = parseLegacyText(initialData.soal);
+      const pA = parseLegacyText(initialData.opsi_a);
+      const pB = parseLegacyText(initialData.opsi_b);
+      const pC = parseLegacyText(initialData.opsi_c);
+      const pD = parseLegacyText(initialData.opsi_d);
+      const pE = parseLegacyText(initialData.opsi_e);
+
+      setFileAttachments({
+        soal: pSoal.file,
+        opsi_a: pA.file,
+        opsi_b: pB.file,
+        opsi_c: pC.file,
+        opsi_d: pD.file,
+        opsi_e: pE.file,
+      });
+
       setFormData({
         id_guru: initialData.id_guru || "",
         id_mapel: initialData.id_mapel || "",
         id_kelas: initialData.id_kelas || "",
         bobot: initialData.bobot ?? 1,
-        soal: initialData.soal || "",
-        opsi_a: initialData.opsi_a || "",
-        opsi_b: initialData.opsi_b || "",
-        opsi_c: initialData.opsi_c || "",
-        opsi_d: initialData.opsi_d || "",
-        opsi_e: initialData.opsi_e || "",
+        soal: pSoal.text,
+        opsi_a: pA.text,
+        opsi_b: pB.text,
+        opsi_c: pC.text,
+        opsi_d: pD.text,
+        opsi_e: pE.text,
         jawaban: initialData.jawaban || "A",
       });
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        id_guru: userRole === "guru" ? userKonId.toString() : "",
+      }));
     }
-  }, [initialData]);
+  }, [initialData, userRole, userKonId]);
 
   const fetchOptions = async () => {
     try {
-      const [guruRes, mapelRes, kelasRes] = await Promise.all([
+      const [guruRes, mapelRes, kelasRes, guruMapelRes] = await Promise.all([
         fetch("/api/guru").then((r) => r.json()),
         fetch("/api/mapel").then((r) => r.json()),
         fetch("/api/kelas").then((r) => r.json()),
+        fetch("/api/guru-mapel").then((r) => r.json()),
       ]);
+
+      setGuruMapelRelations(Array.isArray(guruMapelRes) ? guruMapelRes : []);
 
       setMapelOptions([
         { value: "", label: "-- Pilih Mapel --" },
@@ -102,6 +150,21 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
   };
 
   const handleChange = (field, value) => {
+    if (field === "id_mapel" && value) {
+      if (userRole !== "guru") {
+        const relation = guruMapelRelations.find(
+          (r) => r.id_mapel.toString() === value,
+        );
+        if (relation) {
+          setFormData((prev) => ({
+            ...prev,
+            [field]: value,
+            id_guru: relation.id_guru.toString(),
+          }));
+          return;
+        }
+      }
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -112,10 +175,26 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
       const url = isEdit ? `/api/soal/${initialData.id}` : "/api/soal";
       const method = isEdit ? "PUT" : "POST";
 
+      const buildLegacyString = (field) => {
+        const text = formData[field] || "";
+        const file = fileAttachments[field];
+        return file ? `${text}#####${file}` : text;
+      };
+
+      const payload = {
+        ...formData,
+        soal: buildLegacyString("soal"),
+        opsi_a: buildLegacyString("opsi_a"),
+        opsi_b: buildLegacyString("opsi_b"),
+        opsi_c: buildLegacyString("opsi_c"),
+        opsi_d: buildLegacyString("opsi_d"),
+        opsi_e: buildLegacyString("opsi_e"),
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -141,7 +220,7 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
   ];
 
   const renderEditor = (label, field) => (
-    <div className="mb-12">
+    <div className="mb-6">
       <label className="block text-sm font-medium text-gray-700 mb-2">
         {label}
       </label>
@@ -168,7 +247,19 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
           label="Mapel"
           value={formData.id_mapel}
           onChange={(e) => handleChange("id_mapel", e.target.value)}
-          options={mapelOptions}
+          options={
+            userRole === "guru"
+              ? mapelOptions.filter(
+                  (m) =>
+                    m.value === "" ||
+                    guruMapelRelations.some(
+                      (r) =>
+                        r.id_guru === userKonId &&
+                        r.id_mapel.toString() === m.value,
+                    ),
+                )
+              : mapelOptions
+          }
           required
         />
         <Select
@@ -177,6 +268,14 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
           onChange={(e) => handleChange("id_guru", e.target.value)}
           options={guruOptions}
           required
+          disabled={
+            userRole === "guru" ||
+            (userRole !== "guru" &&
+              formData.id_mapel !== "" &&
+              guruMapelRelations.some(
+                (r) => r.id_mapel.toString() === formData.id_mapel,
+              ))
+          }
         />
         <Select
           label="Kelas"
@@ -192,6 +291,17 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
           onChange={(e) => handleChange("bobot", e.target.value)}
           required
         />
+        <div className="md:col-span-4 text-center mt-[-10px]">
+          {parseInt(formData.bobot || 0) === 0 ? (
+            <span className="text-sm italic font-medium text-red-500">
+              * Soal tidak aktif dan tidak akan dimunculkan saat ujian.
+            </span>
+          ) : (
+            <span className="text-sm italic font-medium text-teal-600">
+              * Soal aktif. Jawaban benar mendapaktan {formData.bobot} poin.
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Question Editor */}
@@ -203,7 +313,7 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
       </div>
 
       {/* Options Editor */}
-      <div className="border-gray-200 pt-12">
+      <div className="border-gray-200 pt-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">
           Pilihan Jawaban
         </h3>
@@ -212,7 +322,6 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
           {renderEditor("Pilihan B", "opsi_b")}
           {renderEditor("Pilihan C", "opsi_c")}
           {renderEditor("Pilihan D", "opsi_d")}
-          {renderEditor("Pilihan E", "opsi_e")}
         </div>
       </div>
 

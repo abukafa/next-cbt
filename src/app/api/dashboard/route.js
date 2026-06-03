@@ -76,7 +76,10 @@ export async function GET(request) {
     }
 
     const tabel_jadwal_raw = await prisma.trGuruTes.findMany({
-      where: jadwalWhere,
+      where: {
+        ...jadwalWhere,
+        terlambat: { gte: now },
+      },
       orderBy: { tgl_mulai: "asc" },
     });
 

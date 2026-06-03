@@ -104,7 +104,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6 flex justify-between items-center print:hidden">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-500 mt-1">CBT System Summary</p>
@@ -114,7 +114,7 @@ export default function DashboardPage() {
       {!isSiswa && adminStats && (
         <>
           {/* ROW 1: 3 CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 print:hidden">
             <StatCard
               label="Total Guru"
               value={adminStats.total_guru || 0}
@@ -133,7 +133,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ROW 2: 2 CARDS (Bar Chart colspan-2, Pie Chart colspan-1) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 print:hidden">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
               <h3 className="text-lg font-bold text-gray-900 mb-4">
                 Distribusi Mapel per Guru
@@ -209,7 +209,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ROW 3: 1 CARD (Bar Chart colspan-3) */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 print:hidden">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
               Distribusi Bank Soal per Mapel
             </h3>
@@ -250,7 +250,7 @@ export default function DashboardPage() {
 
       {/* STATUS UJIAN SECTION (For Admin & Siswa) */}
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 print:hidden">
           <FileText className="text-emerald-600" />
           Status Ujian
         </h2>
@@ -258,7 +258,7 @@ export default function DashboardPage() {
         {statusUjian && (
           <>
             {/* ROW 4: 2 CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 print:hidden">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">
                   Status Ujian
@@ -355,8 +355,8 @@ export default function DashboardPage() {
             </div>
 
             {/* ROW 5: 1 CARD (Table) */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center flex-wrap gap-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden print:shadow-none print:border-none">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center flex-wrap gap-4 print:hidden">
                 <h3 className="text-lg font-bold text-gray-900">
                   Jadwal Ujian Terkini
                 </h3>
@@ -375,7 +375,23 @@ export default function DashboardPage() {
                       </option>
                     ))}
                   </select>
+                  <button
+                    onClick={() => window.print()}
+                    className="ml-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
+                  >
+                    Cetak
+                  </button>
                 </div>
+              </div>
+              <div className="hidden print:block mb-6 px-6 pt-4 text-center">
+                <h2 className="text-2xl font-bold text-gray-900 uppercase">
+                  Jadwal Ujian Terkini
+                </h2>
+                {filterKelas !== "Semua" && (
+                  <p className="text-lg text-gray-700 mt-2">
+                    Kelas: <span className="font-semibold">{filterKelas}</span>
+                  </p>
+                )}
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -411,7 +427,15 @@ export default function DashboardPage() {
                             new Date(a.tgl_mulai) - new Date(b.tgl_mulai),
                         );
 
+                        const classJamCounters = {};
+
                         return exams.map((exam, examIndex) => {
+                          const clsKey = exam.kelas + "_" + exam.jurusan;
+                          if (!classJamCounters[clsKey]) {
+                            classJamCounters[clsKey] = 0;
+                          }
+                          classJamCounters[clsKey]++;
+                          const jamKe = classJamCounters[clsKey];
                           const startTime = new Date(exam.tgl_mulai);
                           const endTime = new Date(
                             startTime.getTime() + (exam.waktu || 0) * 60000,
@@ -426,6 +450,11 @@ export default function DashboardPage() {
                               day: "numeric",
                             },
                           );
+
+                          let mapelName = exam.nama_mapel || "";
+                          if (mapelName.length > 4) {
+                            mapelName = mapelName.substring(0, mapelName.length - 4);
+                          }
 
                           return (
                             <tr
@@ -451,14 +480,14 @@ export default function DashboardPage() {
                                 </>
                               )}
                               <td className="px-4 py-3 text-center text-gray-600 border-r border-gray-200 font-medium">
-                                {examIndex + 1}
+                                {jamKe}
                               </td>
                               <td className="px-4 py-3 text-gray-600 border-r border-gray-200 text-center whitespace-nowrap">
                                 {timeStr}
                               </td>
                               <td className="px-4 py-3 text-gray-800 border-r border-gray-200">
                                 <div className="font-semibold">
-                                  {exam.nama_mapel}
+                                  {mapelName}
                                 </div>
                                 <div className="text-xs text-gray-500 mt-0.5">
                                   {exam.nama_ujian} &bull; Kelas {exam.kelas}{" "}
