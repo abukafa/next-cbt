@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "@/components/layout";
 import { DataTable, Button, Modal, Input, ConfirmDialog } from "@/components/ui";
 
-export default function JurusanPage() {
+export default function JurusanTable() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,12 +82,12 @@ export default function JurusanPage() {
   };
 
   const columns = [
-    { label: "ID", key: "id", width: "100px" },
+    { label: "ID", key: "id", width: "80px" },
     { label: "Nama Jurusan", key: "jurusan" },
     {
       label: "Aksi",
       key: "action",
-      width: "150px",
+      width: "120px",
       render: (row) => (
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" onClick={() => handleOpenModal(row)}>
@@ -110,9 +109,9 @@ export default function JurusanPage() {
   ];
 
   return (
-    <DashboardLayout>
-      <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Program Keahlian / Jurusan</h1>
+    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+      <div className="mb-4 flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-900">Program Keahlian / Jurusan</h2>
       </div>
 
       <DataTable 
@@ -149,11 +148,11 @@ export default function JurusanPage() {
       <ConfirmDialog 
         isOpen={isConfirmOpen}
         title="Hapus Data"
-        message="Apakah Anda yakin ingin menghapus jurusan ini? Pastikan tidak ada data kelas/siswa yang terhubung."
+        message="Apakah Anda yakin ingin menghapus jurusan ini?"
         isDangerous={true}
         onCancel={() => setIsConfirmOpen(false)}
         onConfirm={handleDelete}
       />
-    </DashboardLayout>
+    </div>
   );
 }

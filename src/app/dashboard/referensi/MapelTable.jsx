@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "@/components/layout";
 import { DataTable, Button, Modal, Input, ConfirmDialog } from "@/components/ui";
 
-export default function KelasPage() {
+export default function MapelTable() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,7 +21,7 @@ export default function KelasPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/kelas");
+      const res = await fetch("/api/mapel");
       const json = await res.json();
       setData(json);
     } catch (err) {
@@ -37,7 +36,7 @@ export default function KelasPage() {
       setIsEdit(true);
       setSelectedId(item.id);
       setFormData({ 
-        nama: item.kelas
+        nama: item.nama
       });
     } else {
       setIsEdit(false);
@@ -50,7 +49,7 @@ export default function KelasPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = isEdit ? `/api/kelas/${selectedId}` : "/api/kelas";
+      const url = isEdit ? `/api/mapel/${selectedId}` : "/api/mapel";
       const method = isEdit ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -70,7 +69,7 @@ export default function KelasPage() {
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`/api/kelas/${selectedId}`, {
+      const res = await fetch(`/api/mapel/${selectedId}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -83,12 +82,12 @@ export default function KelasPage() {
   };
 
   const columns = [
-    { label: "ID", key: "id", width: "100px" },
-    { label: "Nama Kelas", key: "kelas" },
+    { label: "ID", key: "id", width: "80px" },
+    { label: "Nama Mata Pelajaran", key: "nama" },
     {
       label: "Aksi",
       key: "action",
-      width: "150px",
+      width: "120px",
       render: (row) => (
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" onClick={() => handleOpenModal(row)}>
@@ -110,9 +109,9 @@ export default function KelasPage() {
   ];
 
   return (
-    <DashboardLayout>
-      <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Data Kelas</h1>
+    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+      <div className="mb-4 flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-900">Mata Pelajaran</h2>
       </div>
 
       <DataTable 
@@ -125,15 +124,15 @@ export default function KelasPage() {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title={isEdit ? "Edit Kelas" : "Tambah Kelas"}
+        title={isEdit ? "Edit Mata Pelajaran" : "Tambah Mata Pelajaran"}
       >
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input 
-            label="Nama Kelas" 
+            label="Nama Mata Pelajaran" 
             value={formData.nama}
             onChange={(e) => setFormData({...formData, nama: e.target.value})}
             required
-            placeholder="Contoh: VII"
+            placeholder="Contoh: Matematika"
           />
           <div className="flex justify-end gap-2 mt-4">
             <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
@@ -149,11 +148,11 @@ export default function KelasPage() {
       <ConfirmDialog 
         isOpen={isConfirmOpen}
         title="Hapus Data"
-        message="Apakah Anda yakin ingin menghapus kelas ini?"
+        message="Apakah Anda yakin ingin menghapus mata pelajaran ini?"
         isDangerous={true}
         onCancel={() => setIsConfirmOpen(false)}
         onConfirm={handleDelete}
       />
-    </DashboardLayout>
+    </div>
   );
 }

@@ -16,15 +16,15 @@ export async function GET() {
     const data = await prisma.trGuruTes.findMany({
       orderBy: { id: "desc" },
     });
-    
+
     // Fetch lookups
     const gurus = await prisma.guru.findMany();
     const mapels = await prisma.mapel.findMany();
 
-    const guruMap = Object.fromEntries(gurus.map(g => [g.id, g.nama]));
-    const mapelMap = Object.fromEntries(mapels.map(m => [m.id, m.nama]));
+    const guruMap = Object.fromEntries(gurus.map((g) => [g.id, g.nama]));
+    const mapelMap = Object.fromEntries(mapels.map((m) => [m.id, m.nama]));
 
-    const enrichedData = data.map(d => ({
+    const enrichedData = data.map((d) => ({
       ...d,
       nama_guru: guruMap[d.id_guru] || "Unknown",
       nama_mapel: mapelMap[d.id_mapel] || "Unknown",
@@ -35,7 +35,7 @@ export async function GET() {
     console.error(error);
     return NextResponse.json(
       { error: "Failed to fetch data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -44,10 +44,13 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const token = generateToken();
-    
+
     // Validate required fields
     if (!body.id_guru || !body.id_mapel || !body.tgl_mulai || !body.terlambat) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
     const data = await prisma.trGuruTes.create({
@@ -71,7 +74,7 @@ export async function POST(request) {
     console.error(error);
     return NextResponse.json(
       { error: "Failed to create data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

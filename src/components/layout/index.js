@@ -47,9 +47,7 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
       submenu: [
         { label: "Siswa", href: "/dashboard/siswa" },
         { label: "Guru", href: "/dashboard/guru" },
-        { label: "Kelas", href: "/dashboard/kelas" },
-        { label: "Jurusan", href: "/dashboard/jurusan" },
-        { label: "Mapel", href: "/dashboard/mapel" },
+        { label: "Referensi (Kls, Jrsn, Mapel)", href: "/dashboard/referensi" },
       ],
     },
     {

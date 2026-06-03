@@ -16,7 +16,9 @@ export default function CetakKartuPage() {
   const [loadingStudents, setLoadingStudents] = useState(false);
 
   // Customization State
-  const [customNamaUjian, setCustomNamaUjian] = useState("PENILAIAN AKHIR SEMESTER");
+  const [customNamaUjian, setCustomNamaUjian] = useState(
+    "PENILAIAN AKHIR SEMESTER",
+  );
   const [customSekolah, setCustomSekolah] = useState("SMK NEGERI 1 CONTOH");
   const [customTahun, setCustomTahun] = useState("Tahun Ajaran 2025/2026");
   const [showPhoto, setShowPhoto] = useState(true);
@@ -68,7 +70,9 @@ export default function CetakKartuPage() {
     e.preventDefault();
     setLoadingStudents(true);
     try {
-      const res = await fetch(`/api/cetak-kartu?kelas=${filterKelas}&jurusan=${filterJurusan}`);
+      const res = await fetch(
+        `/api/cetak-kartu?kelas=${filterKelas}&jurusan=${filterJurusan}`,
+      );
       if (res.ok) {
         const data = await res.json();
         setStudents(data.students);
@@ -85,8 +89,12 @@ export default function CetakKartuPage() {
     <DashboardLayout>
       <div className="mb-6 flex items-center justify-between print:hidden">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cetak Kartu Ujian</h1>
-          <p className="text-gray-600">Sesuaikan tampilan kartu dan cetak peserta berdasarkan kelas.</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Cetak Kartu Ujian
+          </h1>
+          <p className="text-gray-600">
+            Sesuaikan tampilan kartu dan cetak peserta berdasarkan kelas.
+          </p>
         </div>
         <button
           onClick={() => window.print()}
@@ -105,7 +113,9 @@ export default function CetakKartuPage() {
           </h2>
           <form onSubmit={handleFetchStudents} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kelas
+              </label>
               <select
                 value={filterKelas}
                 onChange={(e) => setFilterKelas(e.target.value)}
@@ -113,22 +123,31 @@ export default function CetakKartuPage() {
                 disabled={loadingOpts}
               >
                 <option value="">-- Semua Kelas --</option>
-                {kelasOptions.map(k => <option key={k} value={k}>{k}</option>)}
+                {kelasOptions.map((k) => (
+                  <option key={k} value={k}>
+                    {k}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Jurusan</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Jurusan
+              </label>
               <select
                 value={filterJurusan}
                 onChange={(e) => setFilterJurusan(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500"
                 disabled={loadingOpts}
               >
-                <option value="">-- Semua Jurusan --</option>
-                {jurusanOptions.map(j => <option key={j} value={j}>{j}</option>)}
+                {jurusanOptions.map((j) => (
+                  <option key={j} value={j}>
+                    {j}
+                  </option>
+                ))}
               </select>
             </div>
-            <button 
+            <button
               type="submit"
               disabled={loadingStudents}
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-medium transition-colors"
@@ -141,11 +160,14 @@ export default function CetakKartuPage() {
         {/* Customization Card */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
           <h2 className="text-lg font-bold flex items-center gap-2 mb-4 border-b pb-2">
-            <Settings2 size={18} className="text-emerald-500" /> Kustomisasi Tampilan Kartu
+            <Settings2 size={18} className="text-emerald-500" /> Kustomisasi
+            Tampilan Kartu
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nama Ujian (Kop Kartu)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nama Ujian (Kop Kartu)
+              </label>
               <input
                 type="text"
                 value={customNamaUjian}
@@ -154,7 +176,9 @@ export default function CetakKartuPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nama Instansi / Sekolah</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nama Instansi / Sekolah
+              </label>
               <input
                 type="text"
                 value={customSekolah}
@@ -163,7 +187,9 @@ export default function CetakKartuPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Teks Sub-Header (Misal: Tahun Ajaran)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Teks Sub-Header (Misal: Tahun Ajaran)
+              </label>
               <input
                 type="text"
                 value={customTahun}
@@ -172,14 +198,22 @@ export default function CetakKartuPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Logo Sekolah</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Logo Sekolah
+              </label>
               {logoBase64 ? (
                 <div className="flex items-center gap-3 border border-gray-300 rounded-lg p-2 bg-gray-50">
-                  <img src={logoBase64} alt="Logo" className="w-10 h-10 object-contain bg-white border border-gray-200" />
+                  <img
+                    src={logoBase64}
+                    alt="Logo"
+                    className="w-10 h-10 object-contain bg-white border border-gray-200"
+                  />
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-gray-700">Logo Tersimpan</p>
+                    <p className="text-xs font-medium text-gray-700">
+                      Logo Tersimpan
+                    </p>
                   </div>
-                  <button 
+                  <button
                     onClick={handleRemoveLogo}
                     className="text-xs text-red-600 hover:text-red-700 font-medium px-2 py-1 bg-red-50 rounded"
                   >
@@ -197,13 +231,15 @@ export default function CetakKartuPage() {
             </div>
             <div className="flex items-center mt-6">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={showPhoto}
                   onChange={(e) => setShowPhoto(e.target.checked)}
                   className="w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
                 />
-                <span className="text-sm font-medium text-gray-700">Tampilkan Bingkai Foto Siswa</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Tampilkan Bingkai Foto Siswa
+                </span>
               </label>
             </div>
           </div>
@@ -216,71 +252,110 @@ export default function CetakKartuPage() {
           <h3 className="text-gray-500 text-sm font-bold mb-4 uppercase tracking-wider print:hidden">
             Pratinjau Kartu Ujian ({students.length} Peserta)
           </h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 print:gap-4 w-full max-w-5xl mx-auto print:max-w-none">
-            {students.map(siswa => (
-              <div 
-                key={siswa.id} 
+            {students.map((siswa) => (
+              <div
+                key={siswa.id}
                 className="bg-white border-2 border-gray-900 rounded-lg overflow-hidden break-inside-avoid print:shadow-none shadow-sm"
               >
                 {/* Card Header */}
                 <div className="border-b-2 border-gray-900 p-3 print:p-2 bg-gray-50 print:bg-transparent flex items-center">
                   {logoBase64 && (
                     <div className="shrink-0 mr-3 print:mr-2">
-                      <img src={logoBase64} alt="Logo" className="w-14 h-14 print:w-12 print:h-12 object-contain" />
+                      <img
+                        src={logoBase64}
+                        alt="Logo"
+                        className="w-14 h-14 print:w-12 print:h-12 object-contain"
+                      />
                     </div>
                   )}
                   <div className="flex-1 text-center pr-10">
-                    <h3 className="font-bold text-sm print:text-xs uppercase leading-tight">{customNamaUjian}</h3>
-                    <h4 className="font-bold text-base print:text-sm uppercase leading-tight">{customSekolah}</h4>
-                    <p className="text-xs print:text-[10px] mt-0.5">{customTahun}</p>
+                    <h3 className="font-bold text-sm print:text-xs uppercase leading-tight">
+                      {customNamaUjian}
+                    </h3>
+                    <h4 className="font-bold text-base print:text-sm uppercase leading-tight">
+                      {customSekolah}
+                    </h4>
+                    <p className="text-xs print:text-[10px] mt-0.5">
+                      {customTahun}
+                    </p>
                   </div>
                 </div>
-                
+
                 {/* Card Body */}
                 <div className="p-4 print:p-3 flex gap-4 print:gap-3">
                   {showPhoto && (
                     <div className="w-20 h-28 print:w-16 print:h-24 border-2 border-dashed border-gray-400 flex items-center justify-center shrink-0 bg-gray-50 print:border-solid print:border-gray-800">
                       <div className="text-center">
-                        <User size={24} className="mx-auto text-gray-300 print:hidden" />
-                        <span className="text-[10px] print:text-[8px] text-gray-400 print:text-black">Pas Foto<br/>3x4</span>
+                        <User
+                          size={24}
+                          className="mx-auto text-gray-300 print:hidden"
+                        />
+                        <span className="text-[10px] print:text-[8px] text-gray-400 print:text-black">
+                          Pas Foto
+                          <br />
+                          3x4
+                        </span>
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="flex-1">
                     <table className="w-full text-sm print:text-xs">
                       <tbody>
                         <tr>
-                          <td className="py-1 print:py-0.5 font-semibold w-24 print:w-20 align-top">Nama Peserta</td>
-                          <td className="py-1 print:py-0.5 align-top w-4 print:w-2">:</td>
-                          <td className="py-1 print:py-0.5 font-bold uppercase leading-tight">{siswa.nama}</td>
+                          <td className="py-1 print:py-0.5 font-semibold w-24 print:w-20 align-top">
+                            Nama Peserta
+                          </td>
+                          <td className="py-1 print:py-0.5 align-top w-4 print:w-2">
+                            :
+                          </td>
+                          <td className="py-1 print:py-0.5 font-bold uppercase leading-tight">
+                            {siswa.nama}
+                          </td>
                         </tr>
                         <tr>
-                          <td className="py-1 print:py-0.5 font-semibold align-top">No. Peserta</td>
+                          <td className="py-1 print:py-0.5 font-semibold align-top">
+                            No. Peserta
+                          </td>
                           <td className="py-1 print:py-0.5 align-top">:</td>
-                          <td className="py-1 print:py-0.5 font-mono tracking-wider">{siswa.nim}</td>
+                          <td className="py-1 print:py-0.5 font-mono tracking-wider">
+                            {siswa.nim}
+                          </td>
                         </tr>
                         <tr>
-                          <td className="py-1 print:py-0.5 font-semibold align-top">Kls/Jrsn</td>
+                          <td className="py-1 print:py-0.5 font-semibold align-top">
+                            Kls/Jrsn
+                          </td>
                           <td className="py-1 print:py-0.5 align-top">:</td>
-                          <td className="py-1 print:py-0.5">{siswa.jurusan} - {siswa.id_jurusan}</td>
+                          <td className="py-1 print:py-0.5">
+                            {siswa.jurusan} - {siswa.id_jurusan}
+                          </td>
                         </tr>
                       </tbody>
                     </table>
-                    
+
                     <div className="mt-3 pt-3 print:mt-2 print:pt-2 border-t border-dashed border-gray-300">
                       <table className="w-full text-sm print:text-xs">
                         <tbody>
                           <tr>
-                            <td className="py-0.5 font-semibold text-emerald-700 print:text-black w-24 print:w-20">Username</td>
+                            <td className="py-0.5 font-semibold text-emerald-700 print:text-black w-24 print:w-20">
+                              Username
+                            </td>
                             <td className="py-0.5 w-4 print:w-2">:</td>
-                            <td className="py-0.5 font-bold font-mono text-base print:text-sm tracking-widest">{siswa.username}</td>
+                            <td className="py-0.5 font-bold font-mono text-base print:text-sm tracking-widest">
+                              {siswa.username}
+                            </td>
                           </tr>
                           <tr>
-                            <td className="py-0.5 font-semibold text-emerald-700 print:text-black">Password</td>
+                            <td className="py-0.5 font-semibold text-emerald-700 print:text-black">
+                              Password
+                            </td>
                             <td className="py-0.5">:</td>
-                            <td className="py-0.5 text-xs print:text-[10px] italic text-gray-600 print:text-black">Sama dengan Username</td>
+                            <td className="py-0.5 text-xs print:text-[10px] italic text-gray-600 print:text-black">
+                              Sama dengan Username
+                            </td>
                           </tr>
                         </tbody>
                       </table>
