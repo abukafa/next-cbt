@@ -305,7 +305,7 @@ export function TopBar({ onMenuClick, userName = "User" }) {
       >
         <div className="p-4 flex flex-col items-center">
           <div className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-3xl mb-4">
-            {userName.charAt(0).toUpperCase()}
+            <User size={42} />
           </div>
           <h2 className="text-xl font-bold text-gray-900">{userName}</h2>
 

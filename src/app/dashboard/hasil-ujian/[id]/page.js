@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Printer,
 } from "lucide-react";
+import { calculateInterpolatedScore } from "@/lib/scoring";
 
 export default function DetailHasilUjianPage({ params }) {
   const { id } = use(params);
@@ -81,6 +82,12 @@ export default function DetailHasilUjianPage({ params }) {
       p.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.nim.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const kkm = parseFloat(process.env.NEXT_PUBLIC_NILAI_KONVERSI || "75");
+  const finishedParticipants = participants.filter((p) => p.status === "N");
+  const scores = finishedParticipants.map((p) => parseFloat(p.nilai) || 0);
+  const nMin = scores.length > 0 ? Math.min(...scores) : 0;
+  const nMax = scores.length > 0 ? Math.max(...scores) : 0;
 
   return (
     <DashboardLayout>
@@ -223,10 +230,10 @@ export default function DetailHasilUjianPage({ params }) {
                       Jml Benar
                     </th>
                     <th className="px-6 py-4 print:px-2 print:py-2 font-semibold text-gray-600 text-center">
-                      Persentasi
+                      Nilai
                     </th>
                     <th className="px-6 py-4 print:px-2 print:py-2 font-semibold text-gray-600 text-center">
-                      Nilai Akhir
+                      Konversi
                     </th>
                     <th className="px-6 py-4 print:hidden font-semibold text-gray-600 text-right">
                       Aksi
@@ -300,8 +307,18 @@ export default function DetailHasilUjianPage({ params }) {
                         </td>
                         <td className="px-6 py-4 print:px-2 print:py-2 text-center font-bold text-lg print:text-sm">
                           {p.status === "N" ? (
-                            <span className="text-emerald-600">
-                              {parseFloat(p.nilai).toFixed(1)}
+                            <span className="text-blue-600">
+                              {(() => {
+                                const score = calculateInterpolatedScore(
+                                  p.nilai,
+                                  nMin,
+                                  nMax,
+                                  kkm,
+                                );
+                                return score === 100
+                                  ? score.toFixed(0)
+                                  : score.toFixed(1);
+                              })()}
                             </span>
                           ) : (
                             <span className="text-gray-300">-</span>

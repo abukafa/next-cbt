@@ -19,7 +19,7 @@ export default function CetakKartuPage() {
   const [customNamaUjian, setCustomNamaUjian] = useState(
     "PENILAIAN AKHIR SEMESTER",
   );
-  const [customSekolah, setCustomSekolah] = useState("SMK NEGERI 1 CONTOH");
+  const [customSekolah, setCustomSekolah] = useState("SMP TERPADU BUGELAN");
   const [customTahun, setCustomTahun] = useState("Tahun Ajaran 2025/2026");
   const [showPhoto, setShowPhoto] = useState(true);
   const [logoBase64, setLogoBase64] = useState(null);
