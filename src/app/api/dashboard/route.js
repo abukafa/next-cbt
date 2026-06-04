@@ -20,12 +20,14 @@ export async function GET(request) {
     // STATUS UJIAN SECTION (Applicable for both Admin & Siswa)
     // ========================================================
 
-    // 1. Pie Chart: tr_ikut_ujian -> count per status where tgl_mulai < now()
-    // 2. Bar Chart: tr_ikut_ujian -> count per id_test where tgl_mulai < now()
+    // 1. Pie Chart: tr_ikut_ujian -> count per status where tgl_mulai < now() and tgl_mulai >= 1 week ago
+    // 2. Bar Chart: tr_ikut_ujian -> count per id_test where tgl_mulai < now() and tgl_mulai >= 1 week ago
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
     const ikutUjianWhere =
       role === "siswa"
-        ? { id_user: userId, tgl_mulai: { lt: now } }
-        : { tgl_mulai: { lt: now } };
+        ? { id_user: userId, tgl_mulai: { lt: now, gte: oneWeekAgo } }
+        : { tgl_mulai: { lt: now, gte: oneWeekAgo } };
 
     const ikutUjianStatusRaw = await prisma.trIkutUjian.groupBy({
       by: ["status"],
