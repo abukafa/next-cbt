@@ -121,17 +121,13 @@ export default function KonfirmasiUjianPage({ params }) {
             <table className="w-full text-left border-collapse">
               <tbody>
                 <tr className="border-b border-gray-100">
-                  <th className="py-3 text-gray-500 font-medium w-1/3">
-                    NIM / NIS
-                  </th>
+                  <th className="py-3 text-gray-500 font-medium w-1/3">NIS</th>
                   <td className="py-3 font-semibold text-gray-900">
                     {data.siswa.nim}
                   </td>
                 </tr>
                 <tr className="border-b border-gray-100">
-                  <th className="py-3 text-gray-500 font-medium w-1/3">
-                    Nama Lengkap
-                  </th>
+                  <th className="py-3 text-gray-500 font-medium w-1/3">Nama</th>
                   <td className="py-3 font-semibold text-gray-900">
                     {data.siswa.nama}
                   </td>
@@ -169,7 +165,7 @@ export default function KonfirmasiUjianPage({ params }) {
               <tbody>
                 <tr className="border-b border-gray-100">
                   <th className="py-3 text-gray-500 font-medium w-1/3">
-                    Mata Pelajaran
+                    Pelajaran
                   </th>
                   <td className="py-3 font-semibold text-gray-900">
                     {data.tes.nama_mapel.substring(
@@ -188,7 +184,7 @@ export default function KonfirmasiUjianPage({ params }) {
                 </tr>
                 <tr className="border-b border-gray-100">
                   <th className="py-3 text-gray-500 font-medium w-1/3">
-                    Guru Pengampu
+                    Pengajar
                   </th>
                   <td className="py-3 font-semibold text-gray-900">
                     {data.tes.nama_guru}
@@ -196,7 +192,7 @@ export default function KonfirmasiUjianPage({ params }) {
                 </tr>
                 <tr>
                   <th className="py-3 text-gray-500 font-medium w-1/3">
-                    Alokasi Waktu
+                    Waktu
                   </th>
                   <td className="py-3 font-semibold text-gray-900 flex items-center gap-1">
                     <Clock size={16} className="text-emerald-500" />{" "}

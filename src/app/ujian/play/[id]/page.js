@@ -91,7 +91,7 @@ export default function CBTPlayerPage({ params }) {
       // e.type is 'blur' or 'visibilitychange'
       // Ignore if currently showing a native confirm dialog
       if (window.isConfirming) return;
-      
+
       // Only penalize if they are currently in fullscreen (meaning exam has started)
       if (document.fullscreenElement) {
         if (
@@ -107,7 +107,7 @@ export default function CBTPlayerPage({ params }) {
               handleAutoSubmit(); // trigger auto submit
             } else {
               alert(
-                `PERINGATAN! Anda terdeteksi keluar dari layar ujian atau membuka tab lain.\n\nPelanggaran: ${next}/${MAX_VIOLATIONS}\n\nJika mencapai ${MAX_VIOLATIONS}, ujian akan ditutup otomatis!`,
+                `\nPERINGATAN! \nAnda terdeteksi keluar dari layar ujian atau membuka tab atau aplikasi lain.\n\nPelanggaran: ${next}/${MAX_VIOLATIONS}\nJika mencapai ${MAX_VIOLATIONS}, ujian akan ditutup otomatis!`,
               );
             }
             return next;
@@ -266,7 +266,7 @@ export default function CBTPlayerPage({ params }) {
     const confirmed = window.confirm(
       "Apakah Anda yakin ingin menyelesaikan ujian ini? Anda tidak akan bisa kembali.",
     );
-    
+
     // Give browser time to restore focus before re-enabling penalties
     setTimeout(() => {
       window.isConfirming = false;
@@ -278,7 +278,7 @@ export default function CBTPlayerPage({ params }) {
   };
 
   const handleAutoSubmit = () => {
-    alert("Waktu habis! Jawaban Anda akan dikirim secara otomatis.");
+    alert("Waktu habis! \nJawaban Anda akan dikirim secara otomatis.");
     submitExam();
   };
 
@@ -338,7 +338,10 @@ export default function CBTPlayerPage({ params }) {
   }
 
   const currentQ = questions[currentIndex];
-  const optionsList = ["A", "B", "C", "D"];
+  // Support for 4 or 5 options via env var
+  const jumlahPG = parseInt(process.env.NEXT_PUBLIC_JUMLAH_PG || "4");
+  const optionsList =
+    jumlahPG >= 5 ? ["A", "B", "C", "D", "E"] : ["A", "B", "C", "D"];
 
   if (!isFullscreen) {
     return (

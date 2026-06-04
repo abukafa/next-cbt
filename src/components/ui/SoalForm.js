@@ -35,6 +35,7 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
   const { data: session } = useSession();
   const userRole = session?.user?.role;
   const userKonId = parseInt(session?.user?.kon_id);
+  const jumlahPG = parseInt(process.env.NEXT_PUBLIC_JUMLAH_PG || "4");
 
   const [formData, setFormData] = useState({
     id_guru: "",
@@ -216,8 +217,10 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
     { value: "B", label: "B" },
     { value: "C", label: "C" },
     { value: "D", label: "D" },
-    { value: "E", label: "E" },
   ];
+  if (jumlahPG >= 5) {
+    jawabanOptions.push({ value: "E", label: "E" });
+  }
 
   const renderEditor = (label, field) => (
     <div className="mb-6">
@@ -298,7 +301,7 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
             </span>
           ) : (
             <span className="text-sm italic font-medium text-teal-600">
-              * Soal aktif. Jawaban benar mendapaktan {formData.bobot} poin.
+              * Soal aktif. Jawaban benar mendapatkan {formData.bobot} poin.
             </span>
           )}
         </div>
@@ -322,6 +325,7 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
           {renderEditor("Pilihan B", "opsi_b")}
           {renderEditor("Pilihan C", "opsi_c")}
           {renderEditor("Pilihan D", "opsi_d")}
+          {jumlahPG >= 5 && renderEditor("Pilihan E", "opsi_e")}
         </div>
       </div>
 
