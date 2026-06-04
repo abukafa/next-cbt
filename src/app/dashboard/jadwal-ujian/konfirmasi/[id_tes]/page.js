@@ -8,7 +8,7 @@ import { Clock, BookOpen, User, Key, AlertTriangle } from "lucide-react";
 export default function KonfirmasiUjianPage({ params }) {
   const { id_tes } = use(params);
   const router = useRouter();
-  
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,21 +41,21 @@ export default function KonfirmasiUjianPage({ params }) {
       alert("Silakan masukkan token ujian!");
       return;
     }
-    
+
     setSubmitting(true);
-    
+
     try {
       const res = await fetch(`/api/ujian/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id_tes: parseInt(id_tes),
-          token: token.toUpperCase()
-        })
+          token: token.toUpperCase(),
+        }),
       });
-      
+
       const result = await res.json();
-      
+
       if (res.ok && result.id_ikut_ujian) {
         // Berhasil gabung/memulai ujian
         router.push(`/ujian/play/${result.id_ikut_ujian}`);
@@ -83,10 +83,12 @@ export default function KonfirmasiUjianPage({ params }) {
     return (
       <DashboardLayout>
         <div className="bg-red-50 text-red-600 p-6 rounded-lg border border-red-200">
-          <h2 className="text-lg font-bold flex items-center gap-2"><AlertTriangle /> Error</h2>
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <AlertTriangle /> Error
+          </h2>
           <p>{error}</p>
-          <button 
-            onClick={() => router.push('/dashboard/jadwal-ujian')}
+          <button
+            onClick={() => router.push("/dashboard/jadwal-ujian")}
             className="mt-4 px-4 py-2 bg-red-100 hover:bg-red-200 rounded-md transition-colors"
           >
             Kembali
@@ -99,8 +101,12 @@ export default function KonfirmasiUjianPage({ params }) {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Konfirmasi Data Ujian</h1>
-        <p className="text-gray-600">Periksa kembali data Anda sebelum memulai ujian.</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Konfirmasi Data Ujian
+        </h1>
+        <p className="text-gray-600">
+          Periksa kembali data Anda sebelum memulai ujian.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -115,20 +121,36 @@ export default function KonfirmasiUjianPage({ params }) {
             <table className="w-full text-left border-collapse">
               <tbody>
                 <tr className="border-b border-gray-100">
-                  <th className="py-3 text-gray-500 font-medium w-1/3">NIM / NIS</th>
-                  <td className="py-3 font-semibold text-gray-900">{data.siswa.nim}</td>
+                  <th className="py-3 text-gray-500 font-medium w-1/3">
+                    NIM / NIS
+                  </th>
+                  <td className="py-3 font-semibold text-gray-900">
+                    {data.siswa.nim}
+                  </td>
                 </tr>
                 <tr className="border-b border-gray-100">
-                  <th className="py-3 text-gray-500 font-medium w-1/3">Nama Lengkap</th>
-                  <td className="py-3 font-semibold text-gray-900">{data.siswa.nama}</td>
+                  <th className="py-3 text-gray-500 font-medium w-1/3">
+                    Nama Lengkap
+                  </th>
+                  <td className="py-3 font-semibold text-gray-900">
+                    {data.siswa.nama}
+                  </td>
                 </tr>
                 <tr className="border-b border-gray-100">
-                  <th className="py-3 text-gray-500 font-medium w-1/3">Kelas</th>
-                  <td className="py-3 font-semibold text-gray-900">{data.siswa.kelas}</td>
+                  <th className="py-3 text-gray-500 font-medium w-1/3">
+                    Kelas
+                  </th>
+                  <td className="py-3 font-semibold text-gray-900">
+                    {data.siswa.kelas}
+                  </td>
                 </tr>
                 <tr>
-                  <th className="py-3 text-gray-500 font-medium w-1/3">Jurusan</th>
-                  <td className="py-3 font-semibold text-gray-900">{data.siswa.jurusan}</td>
+                  <th className="py-3 text-gray-500 font-medium w-1/3">
+                    Jurusan
+                  </th>
+                  <td className="py-3 font-semibold text-gray-900">
+                    {data.siswa.jurusan}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -146,28 +168,49 @@ export default function KonfirmasiUjianPage({ params }) {
             <table className="w-full text-left border-collapse mb-6">
               <tbody>
                 <tr className="border-b border-gray-100">
-                  <th className="py-3 text-gray-500 font-medium w-1/3">Mata Pelajaran</th>
-                  <td className="py-3 font-semibold text-gray-900">{data.tes.nama_mapel}</td>
+                  <th className="py-3 text-gray-500 font-medium w-1/3">
+                    Mata Pelajaran
+                  </th>
+                  <td className="py-3 font-semibold text-gray-900">
+                    {data.tes.nama_mapel.substring(
+                      0,
+                      data.tes.nama_mapel.length - 4,
+                    )}
+                  </td>
                 </tr>
                 <tr className="border-b border-gray-100">
-                  <th className="py-3 text-gray-500 font-medium w-1/3">Nama Ujian</th>
-                  <td className="py-3 font-semibold text-gray-900">{data.tes.nama_ujian}</td>
+                  <th className="py-3 text-gray-500 font-medium w-1/3">
+                    Nama Ujian
+                  </th>
+                  <td className="py-3 font-semibold text-gray-900">
+                    {data.tes.nama_ujian}
+                  </td>
                 </tr>
                 <tr className="border-b border-gray-100">
-                  <th className="py-3 text-gray-500 font-medium w-1/3">Guru Pengampu</th>
-                  <td className="py-3 font-semibold text-gray-900">{data.tes.nama_guru}</td>
+                  <th className="py-3 text-gray-500 font-medium w-1/3">
+                    Guru Pengampu
+                  </th>
+                  <td className="py-3 font-semibold text-gray-900">
+                    {data.tes.nama_guru}
+                  </td>
                 </tr>
                 <tr>
-                  <th className="py-3 text-gray-500 font-medium w-1/3">Alokasi Waktu</th>
+                  <th className="py-3 text-gray-500 font-medium w-1/3">
+                    Alokasi Waktu
+                  </th>
                   <td className="py-3 font-semibold text-gray-900 flex items-center gap-1">
-                    <Clock size={16} className="text-emerald-500"/> {data.tes.waktu} Menit
+                    <Clock size={16} className="text-emerald-500" />{" "}
+                    {data.tes.waktu} Menit
                   </td>
                 </tr>
               </tbody>
             </table>
 
             {/* Input Token Form */}
-            <form onSubmit={handleMulai} className="mt-auto bg-gray-50 p-6 rounded-lg border border-gray-200">
+            <form
+              onSubmit={handleMulai}
+              className="mt-auto bg-gray-50 p-6 rounded-lg border border-gray-200"
+            >
               <div className="mb-4">
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                   <Key size={16} /> TOKEN UJIAN
@@ -191,7 +234,9 @@ export default function KonfirmasiUjianPage({ params }) {
                 type="submit"
                 disabled={submitting}
                 className={`w-full py-3 rounded-lg text-white font-bold text-lg flex justify-center items-center gap-2 transition-colors ${
-                  submitting ? 'bg-emerald-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg'
+                  submitting
+                    ? "bg-emerald-400 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg"
                 }`}
               >
                 {submitting ? (

@@ -138,7 +138,7 @@ export default function DetailHasilUjianPage({ params }) {
                     Mata Pelajaran
                   </p>
                   <p className="font-semibold text-gray-900">
-                    {data.nama_mapel}
+                    {data.nama_mapel.substring(0, data.nama_mapel.length - 4)}
                   </p>
                 </div>
               </div>
