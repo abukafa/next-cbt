@@ -3,7 +3,15 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout";
-import { Clock, BookOpen, User, Calendar, Play, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  Clock,
+  BookOpen,
+  User,
+  Calendar,
+  Play,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 
 export default function JadwalUjianSiswaPage() {
   const [jadwal, setJadwal] = useState([]);
@@ -40,7 +48,7 @@ export default function JadwalUjianSiswaPage() {
     switch (tes.status) {
       case "tersedia":
         return (
-          <button 
+          <button
             onClick={() => handleMulai(tes.id, tes.status)}
             className="w-full mt-4 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-lg transition-colors font-medium"
           >
@@ -50,7 +58,7 @@ export default function JadwalUjianSiswaPage() {
         );
       case "sedang_mengerjakan":
         return (
-          <button 
+          <button
             onClick={() => handleMulai(tes.id, tes.status, tes.id_ikut_ujian)}
             className="w-full mt-4 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-lg transition-colors font-medium"
           >
@@ -60,7 +68,7 @@ export default function JadwalUjianSiswaPage() {
         );
       case "selesai":
         return (
-          <button 
+          <button
             disabled
             className="w-full mt-4 flex items-center justify-center gap-2 bg-gray-100 text-gray-500 py-2 px-4 rounded-lg font-medium cursor-not-allowed"
           >
@@ -70,7 +78,7 @@ export default function JadwalUjianSiswaPage() {
         );
       case "belum_mulai":
         return (
-          <button 
+          <button
             disabled
             className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-50 text-blue-500 py-2 px-4 rounded-lg font-medium cursor-not-allowed border border-blue-200"
           >
@@ -80,7 +88,7 @@ export default function JadwalUjianSiswaPage() {
         );
       case "terlewat":
         return (
-          <button 
+          <button
             disabled
             className="w-full mt-4 flex items-center justify-center gap-2 bg-red-50 text-red-500 py-2 px-4 rounded-lg font-medium cursor-not-allowed border border-red-200"
           >
@@ -97,7 +105,9 @@ export default function JadwalUjianSiswaPage() {
     <DashboardLayout>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Jadwal Ujian</h1>
-        <p className="text-gray-600">Daftar ujian yang ditugaskan untuk kelas Anda.</p>
+        <p className="text-gray-600">
+          Daftar ujian yang ditugaskan untuk kelas Anda.
+        </p>
       </div>
 
       {loading ? (
@@ -110,19 +120,28 @@ export default function JadwalUjianSiswaPage() {
             <BookOpen size={24} className="text-gray-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900">Tidak ada ujian</h3>
-          <p className="text-gray-500">Saat ini tidak ada jadwal ujian untuk kelas Anda.</p>
+          <p className="text-gray-500">
+            Saat ini tidak ada jadwal ujian untuk kelas Anda.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {jadwal.map((tes) => (
-            <div key={tes.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col">
+            <div
+              key={tes.id}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col"
+            >
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 line-clamp-2">{tes.nama_ujian}</h3>
-                
+                <h3 className="text-xl font-bold text-gray-900 mb-4 line-clamp-2">
+                  {tes.nama_ujian}
+                </h3>
+
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-3 text-sm text-gray-600">
                     <BookOpen size={16} className="text-emerald-500" />
-                    <span>{tes.nama_mapel}</span>
+                    <span>
+                      {tes.nama_mapel.substring(0, tes.nama_mapel.length - 4)}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-gray-600">
                     <User size={16} className="text-emerald-500" />
@@ -130,18 +149,35 @@ export default function JadwalUjianSiswaPage() {
                   </div>
                   <div className="flex items-center gap-3 text-sm text-gray-600">
                     <Clock size={16} className="text-emerald-500" />
-                    <span>{tes.waktu} Menit ({tes.jumlah_soal} Soal)</span>
+                    <span>
+                      {tes.waktu} Menit ({tes.jumlah_soal} Soal)
+                    </span>
                   </div>
                   <div className="flex items-start gap-3 text-sm text-gray-600">
-                    <Calendar size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                    <Calendar
+                      size={16}
+                      className="text-emerald-500 shrink-0 mt-0.5"
+                    />
                     <div className="flex flex-col">
-                      <span>Mulai: {new Date(tes.tgl_mulai).toLocaleString("id-ID", {dateStyle: 'medium', timeStyle: 'short'})}</span>
-                      <span>Akhir: {new Date(tes.terlambat).toLocaleString("id-ID", {dateStyle: 'medium', timeStyle: 'short'})}</span>
+                      <span>
+                        Mulai:{" "}
+                        {new Date(tes.tgl_mulai).toLocaleString("id-ID", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </span>
+                      <span>
+                        Akhir:{" "}
+                        {new Date(tes.terlambat).toLocaleString("id-ID", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               <div className="pt-4 border-t border-gray-100 mt-auto">
                 {renderStatusButton(tes)}
               </div>

@@ -31,12 +31,17 @@ export default function CBTPlayerPage({ params }) {
   const [isOffline, setIsOffline] = useState(false);
   const [pendingSync, setPendingSync] = useState(false);
 
+  // Soft-Lock States
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [violationCount, setViolationCount] = useState(0);
+  const MAX_VIOLATIONS = 3;
+
   // Use refs for autosave queue to prevent rapid firing
   const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
     fetchExamData();
-    
+
     // Offline / Online listeners
     const handleOffline = () => setIsOffline(true);
     const handleOnline = () => {
@@ -46,20 +51,81 @@ export default function CBTPlayerPage({ params }) {
         syncDataToServer();
       }
     };
-    
+
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
-    
+
     // Initial check
     if (!navigator.onLine) {
       setIsOffline(true);
     }
-    
+
     return () => {
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
     };
   }, [id]);
+
+  // Soft-Lock Effect
+  useEffect(() => {
+    // 1. Block Context Menu & Shortcuts
+    const preventDefault = (e) => e.preventDefault();
+    document.addEventListener("contextmenu", preventDefault);
+
+    const handleKeyDown = (e) => {
+      if (e.key === "F12") e.preventDefault();
+      if (e.ctrlKey && (e.key === "c" || e.key === "v" || e.key === "p")) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+
+    // 2. Fullscreen Listener
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    // 3. Tab Visibility & Window Blur Listener (Catch Task View / Alt-Tab)
+    const handleVisibilityOrBlur = (e) => {
+      // e.type is 'blur' or 'visibilitychange'
+      // Ignore if currently showing a native confirm dialog
+      if (window.isConfirming) return;
+      
+      // Only penalize if they are currently in fullscreen (meaning exam has started)
+      if (document.fullscreenElement) {
+        if (
+          e.type === "blur" ||
+          (e.type === "visibilitychange" && document.hidden)
+        ) {
+          setViolationCount((prev) => {
+            const next = prev + 1;
+            if (next >= MAX_VIOLATIONS) {
+              alert(
+                "PELANGGARAN MAKSIMAL! Anda telah keluar dari ujian terlalu sering. Ujian akan diselesaikan secara otomatis.",
+              );
+              handleAutoSubmit(); // trigger auto submit
+            } else {
+              alert(
+                `PERINGATAN! Anda terdeteksi keluar dari layar ujian atau membuka tab lain.\n\nPelanggaran: ${next}/${MAX_VIOLATIONS}\n\nJika mencapai ${MAX_VIOLATIONS}, ujian akan ditutup otomatis!`,
+              );
+            }
+            return next;
+          });
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityOrBlur);
+    window.addEventListener("blur", handleVisibilityOrBlur);
+
+    return () => {
+      document.removeEventListener("contextmenu", preventDefault);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("visibilitychange", handleVisibilityOrBlur);
+      window.removeEventListener("blur", handleVisibilityOrBlur);
+    };
+  }, []);
 
   const pendingSyncRef = useRef(false);
   const answersRef = useRef({}); // keep track of answers for sync
@@ -86,7 +152,7 @@ export default function CBTPlayerPage({ params }) {
       const result = await res.json();
 
       if (res.ok) {
-        if (result.status === "Y") {
+        if (result.status === "N") {
           router.replace("/ujian/selesai");
           return;
         }
@@ -190,15 +256,23 @@ export default function CBTPlayerPage({ params }) {
 
   const handleManualSubmit = () => {
     if (isOffline) {
-      alert("Koneksi internet terputus. Silakan tunggu koneksi kembali normal sebelum mengumpulkan ujian.");
+      alert(
+        "Koneksi internet terputus. Silakan tunggu koneksi kembali normal sebelum mengumpulkan ujian.",
+      );
       return;
     }
 
-    if (
-      window.confirm(
-        "Apakah Anda yakin ingin menyelesaikan ujian ini? Anda tidak akan bisa kembali.",
-      )
-    ) {
+    window.isConfirming = true;
+    const confirmed = window.confirm(
+      "Apakah Anda yakin ingin menyelesaikan ujian ini? Anda tidak akan bisa kembali.",
+    );
+    
+    // Give browser time to restore focus before re-enabling penalties
+    setTimeout(() => {
+      window.isConfirming = false;
+    }, 1000);
+
+    if (confirmed) {
       submitExam();
     }
   };
@@ -213,7 +287,7 @@ export default function CBTPlayerPage({ params }) {
       alert("Menunggu koneksi internet...");
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       // Force one last save just in case
@@ -264,15 +338,49 @@ export default function CBTPlayerPage({ params }) {
   }
 
   const currentQ = questions[currentIndex];
-  const optionsList = ["A", "B", "C", "D", "E"];
+  const optionsList = ["A", "B", "C", "D"];
+
+  if (!isFullscreen) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-6 text-center text-white select-none">
+        <AlertTriangle
+          size={64}
+          className="text-yellow-500 mb-6 animate-pulse"
+        />
+        <h2 className="text-3xl font-bold mb-4">Mode Ujian Terkunci</h2>
+        <p className="text-gray-300 mb-8 max-w-lg text-lg">
+          Ujian ini menggunakan mode layar penuh untuk meminimalisir kecurangan.
+          Anda dilarang keluar dari layar penuh, membuka tab/aplikasi lain, atau
+          melakukan <i className="text-white font-semibold">copy-paste</i>.
+        </p>
+        <button
+          onClick={() => {
+            if (document.documentElement.requestFullscreen) {
+              document.documentElement.requestFullscreen().catch((e) => {
+                console.warn("Fullscreen failed", e);
+                setIsFullscreen(true); // Fallback
+              });
+            } else {
+              setIsFullscreen(true); // Fallback for unsupported browsers (iOS)
+            }
+          }}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg transition-transform transform hover:scale-105 flex items-center gap-2"
+        >
+          <CheckCircle size={24} />
+          Mulai / Lanjutkan Ujian
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-100 flex flex-col select-none">
       {/* OFFLINE BANNER */}
       {isOffline && (
         <div className="bg-red-500 text-white text-center py-2 px-4 font-medium flex items-center justify-center gap-2">
           <AlertTriangle size={18} />
-          Koneksi terputus! Jawaban Anda disimpan di perangkat. Jangan tutup browser.
+          Koneksi terputus! Jawaban Anda disimpan di perangkat. Jangan tutup
+          browser.
         </div>
       )}
 

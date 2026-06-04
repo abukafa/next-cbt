@@ -31,11 +31,10 @@ export async function GET(req) {
     if (role === "siswa") {
       const siswa = await prisma.siswa.findUnique({
         where: { id: kon_id },
-        include: {
-          kelas: true,
-          jurusan: true,
-        },
       });
+      if (siswa) {
+        siswa.kelas = { nama_kelas: siswa.jurusan || "-" };
+      }
       return NextResponse.json({ role: "siswa", detail: siswa });
     }
 

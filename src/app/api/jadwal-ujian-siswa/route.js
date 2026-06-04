@@ -38,7 +38,7 @@ export async function GET(request) {
     // Get the student's ikut_ujian records
     const ikutUjianList = await prisma.trIkutUjian.findMany({
       where: {
-        id_user: userId
+        id_user: kon_id
       }
     });
 
@@ -58,7 +58,7 @@ export async function GET(request) {
       let status = "belum";
       
       if (ikut) {
-        if (ikut.status === "Y") {
+        if (ikut.status === "N") {
           status = "selesai";
         } else {
           status = "sedang_mengerjakan";

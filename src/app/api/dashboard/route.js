@@ -11,7 +11,7 @@ export async function GET(request) {
     }
 
     const role = session.user.role;
-    const userId = parseInt(session.user.id);
+    const userId = role === "siswa" ? parseInt(session.user.kon_id) : parseInt(session.user.id);
     const now = new Date();
 
     let data = {};
@@ -67,20 +67,20 @@ export async function GET(request) {
       };
     });
 
-    // 3. Tabel: jadwal ujian -> tr_guru_tes where tgl_mulai < now()
-    // For siswa, we should maybe only show what they are eligible for,
-    // but the instruction says "tr_guru_tes where tgl_mulai < now()".
-    // I will return all exams that have started, but if Siswa, filter by their class/jurusan if possible, or just return what they are in.
+    // 3. Tabel: jadwal ujian -> tr_guru_tes (Currently Active Exams)
     let jadwalWhere = {};
     if (role === "siswa") {
-      // Find what the student is participating in
-      jadwalWhere.id = { in: testIds };
+      const siswaData = await prisma.siswa.findUnique({ where: { id: userId } });
+      if (siswaData) {
+        jadwalWhere.kelas = siswaData.jurusan;
+        jadwalWhere.jurusan = siswaData.id_jurusan;
+      }
     }
 
     const tabel_jadwal_raw = await prisma.trGuruTes.findMany({
       where: {
         ...jadwalWhere,
-        terlambat: { gte: now },
+        terlambat: { gte: oneWeekAgo },
       },
       orderBy: { tgl_mulai: "asc" },
     });

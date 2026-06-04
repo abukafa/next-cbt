@@ -242,9 +242,9 @@ export default function SiswaPage() {
   };
 
   const columns = [
-    { label: "NIS", key: "nim", className: "hidden lg:table-cell" }, // display from 'nim' field
+    { label: "NIS", key: "nim", className: "hidden md:table-cell" }, // display from 'nim' field
     { label: "Nama Siswa", key: "nama" },
-    { label: "Kelas", key: "jurusan", className: "hidden lg:table-cell" }, // display from 'jurusan' field
+    { label: "Kelas", key: "jurusan" }, // display from 'jurusan' field
     {
       label: "Status User",
       key: "hasUser",

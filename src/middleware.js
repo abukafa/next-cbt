@@ -18,8 +18,7 @@ export default withAuth(
 
     // Siswa should only access dashboard and jadwal-ujian
     if (token?.role === "siswa") {
-       const allowedSiswaPaths = ["/dashboard", "/dashboard/jadwal-ujian"];
-       if (path.startsWith("/dashboard") && !allowedSiswaPaths.includes(path)) {
+       if (path !== "/dashboard" && !path.startsWith("/dashboard/jadwal-ujian") && path.startsWith("/dashboard")) {
            return NextResponse.redirect(new URL("/dashboard", req.url));
        }
     }

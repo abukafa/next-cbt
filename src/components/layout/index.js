@@ -9,7 +9,7 @@ import {
   Menu,
   X,
   Home,
-  Users,
+  User,
   BookOpen,
   FileText,
   BarChart3,
@@ -290,7 +290,7 @@ export function TopBar({ onMenuClick, userName = "User" }) {
                 className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-lg hover:ring-2 hover:ring-offset-2 hover:ring-emerald-500 transition-all focus:outline-none"
                 title="Profil Pengguna"
               >
-                {userName.charAt(0).toUpperCase()}
+                <User size={20} />
               </button>
             </div>
           </div>
