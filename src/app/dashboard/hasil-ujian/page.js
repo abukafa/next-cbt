@@ -89,7 +89,13 @@ export default function HasilUjianPage() {
                   >
                     {tes.nama_ujian}
                   </h3>
-                  <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                  <span
+                    className={`text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${
+                      tes.jml_selesai > 0
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
                     Kls {tes.kelas}
                   </span>
                 </div>
@@ -144,15 +150,23 @@ export default function HasilUjianPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+              <div
+                className={`px-6 py-4 border-t ${tes.jml_selesai == 0 ? "border-gray-100 bg-gray-50" : "border-emerald-100 bg-emerald-50"}`}
+              >
                 <button
                   onClick={() =>
                     router.push(`/dashboard/hasil-ujian/${tes.id}`)
                   }
-                  className="w-full flex items-center justify-center gap-2 text-emerald-600 font-medium hover:text-emerald-700 transition-colors"
+                  className={`w-full flex items-center justify-center gap-2 font-medium hover:text-emerald-700 transition-colors ${tes.jml_selesai == 0 ? "text-gray-600" : "text-emerald-600"}`}
+                  disabled={tes.jml_selesai == 0}
                 >
-                  <Eye size={18} />
-                  Lihat Detail Hasil
+                  <Eye
+                    size={18}
+                    className={tes.jml_selesai == 0 ? "hidden" : ""}
+                  />
+                  {tes.jml_selesai == 0
+                    ? "Belum ada Hasil"
+                    : "Lihat Detail Hasil"}
                 </button>
               </div>
             </div>

@@ -31,14 +31,22 @@ export async function GET(request) {
         const guru = await prisma.guru.findUnique({ where: { id: tes.id_guru } });
         const mapel = await prisma.mapel.findUnique({ where: { id: tes.id_mapel } });
         
-        // Count participants
-        const jmlPeserta = await prisma.trIkutUjian.count({
-          where: { id_tes: tes.id }
+        // Count total participants (students in this class/jurusan)
+        // In legacy DB: siswa.jurusan stores kelas, siswa.id_jurusan stores jurusan
+        let siswaWhere = {};
+        if (tes.kelas && tes.jurusan) {
+          siswaWhere = {
+            jurusan: tes.kelas,
+            id_jurusan: tes.jurusan
+          };
+        }
+        const jmlPeserta = await prisma.siswa.count({
+          where: siswaWhere
         });
 
         // Count finished participants
         const jmlSelesai = await prisma.trIkutUjian.count({
-          where: { id_tes: tes.id, status: "Y" }
+          where: { id_tes: tes.id, status: "N" }
         });
 
         return {
