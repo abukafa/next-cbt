@@ -170,10 +170,19 @@ export default function UjianPage() {
       const url = isEdit ? `/api/ujian/${selectedId}` : "/api/ujian";
       const method = isEdit ? "PUT" : "POST";
 
+      const payload = { ...formData };
+      
+      if (payload.tgl_mulai) {
+        payload.tgl_mulai = new Date(payload.tgl_mulai).toISOString();
+      }
+      if (payload.terlambat) {
+        payload.terlambat = new Date(payload.terlambat).toISOString();
+      }
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
