@@ -437,9 +437,7 @@ export default function DashboardPage() {
                           classJamCounters[clsKey]++;
                           const jamKe = classJamCounters[clsKey];
                           const startTime = new Date(exam.tgl_mulai);
-                          const endTime = new Date(
-                            startTime.getTime() + (exam.waktu || 0) * 60000,
-                          );
+                          const endTime = new Date(exam.terlambat);
                           const timeStr = `${startTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} - ${endTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
                           const dateFormatted = startTime.toLocaleDateString(
                             "id-ID",
