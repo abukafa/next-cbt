@@ -15,10 +15,12 @@ import {
   Printer,
 } from "lucide-react";
 import { calculateInterpolatedScore } from "@/lib/scoring";
+import { useSession } from "next-auth/react";
 
 export default function DetailHasilUjianPage({ params }) {
   const { id } = use(params);
   const router = useRouter();
+  const { data: session } = useSession();
 
   const [data, setData] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -87,7 +89,7 @@ export default function DetailHasilUjianPage({ params }) {
   const finishedParticipants = participants.filter((p) => p.status === "N");
   const scores = finishedParticipants.map((p) => parseFloat(p.nilai) || 0);
   const nMin = scores.length > 0 ? Math.min(...scores) : 0;
-  const nMax = scores.length > 0 ? Math.max(...scores) : 0;
+  const nMax = scores.length > 0 ? 100 : 0;
 
   return (
     <DashboardLayout>
@@ -346,9 +348,9 @@ export default function DetailHasilUjianPage({ params }) {
                               onClick={() =>
                                 handleAction("reset", p.id_ikut_ujian, p.nama)
                               }
-                              disabled="yes"
+                              disabled={processingId === p.id_ikut_ujian || (session?.user?.username !== 'root' && session?.user?.name !== 'root')}
                               className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
-                              title="Reset ulang ujian peserta"
+                              title={(session?.user?.username === 'root' || session?.user?.name === 'root') ? "Reset ulang ujian peserta" : "Hanya admin root yang dapat mereset ujian"}
                             >
                               <Trash2 size={16} />
                             </button>
