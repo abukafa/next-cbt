@@ -60,24 +60,35 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
     opsi_e: "",
   });
 
-  const parseLegacyText = (rawStr) => {
+  const parseLegacyOption = (rawStr) => {
     if (!rawStr) return { text: "", file: "" };
     const parts = rawStr.split("#####");
+    if (parts.length === 1) {
+      // No ##### delimiter found, assume it's pure text
+      return { text: parts[0], file: "" };
+    }
+    // CandyCBT format for options: FILE#####TEXT
     return {
-      text: parts[0] || "",
-      file: parts.length > 1 ? parts[1] : "",
+      file: parts[0] || "",
+      text: parts[1] || "",
     };
+  };
+
+  const parseLegacySoal = (rawStr) => {
+    // Soal column doesn't use ##### delimiter for file (it has its own column),
+    // but just in case it got polluted, we handle it as plain text.
+    return { text: rawStr || "", file: "" };
   };
 
   useEffect(() => {
     fetchOptions();
     if (initialData) {
-      const pSoal = parseLegacyText(initialData.soal);
-      const pA = parseLegacyText(initialData.opsi_a);
-      const pB = parseLegacyText(initialData.opsi_b);
-      const pC = parseLegacyText(initialData.opsi_c);
-      const pD = parseLegacyText(initialData.opsi_d);
-      const pE = parseLegacyText(initialData.opsi_e);
+      const pSoal = parseLegacySoal(initialData.soal);
+      const pA = parseLegacyOption(initialData.opsi_a);
+      const pB = parseLegacyOption(initialData.opsi_b);
+      const pC = parseLegacyOption(initialData.opsi_c);
+      const pD = parseLegacyOption(initialData.opsi_d);
+      const pE = parseLegacyOption(initialData.opsi_e);
 
       setFileAttachments({
         soal: pSoal.file,
@@ -176,20 +187,21 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
       const url = isEdit ? `/api/soal/${initialData.id}` : "/api/soal";
       const method = isEdit ? "PUT" : "POST";
 
-      const buildLegacyString = (field) => {
+      const buildLegacyOption = (field) => {
         const text = formData[field] || "";
-        const file = fileAttachments[field];
-        return file ? `${text}#####${file}` : text;
+        const file = fileAttachments[field] || "";
+        // Options in legacy use FILE#####TEXT
+        return `${file}#####${text}`;
       };
 
       const payload = {
         ...formData,
-        soal: buildLegacyString("soal"),
-        opsi_a: buildLegacyString("opsi_a"),
-        opsi_b: buildLegacyString("opsi_b"),
-        opsi_c: buildLegacyString("opsi_c"),
-        opsi_d: buildLegacyString("opsi_d"),
-        opsi_e: buildLegacyString("opsi_e"),
+        soal: formData.soal || "",
+        opsi_a: buildLegacyOption("opsi_a"),
+        opsi_b: buildLegacyOption("opsi_b"),
+        opsi_c: buildLegacyOption("opsi_c"),
+        opsi_d: buildLegacyOption("opsi_d"),
+        opsi_e: buildLegacyOption("opsi_e"),
       };
 
       const res = await fetch(url, {

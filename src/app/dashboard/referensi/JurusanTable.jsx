@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   DataTable,
   Button,
@@ -10,6 +11,8 @@ import {
 } from "@/components/ui";
 
 export default function JurusanTable() {
+  const { data: session } = useSession();
+  const isRoot = session?.user?.username === 'root';
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -106,6 +109,8 @@ export default function JurusanTable() {
           <Button
             size="sm"
             variant="danger"
+            disabled={!isRoot}
+            title={!isRoot ? "Hanya admin root yang dapat menghapus" : ""}
             onClick={() => {
               setSelectedId(row.id);
               setIsConfirmOpen(true);

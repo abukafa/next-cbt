@@ -19,6 +19,9 @@ export default function BankSoalPage() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
+  const [filterMapel, setFilterMapel] = useState("");
+  const [filterKelas, setFilterKelas] = useState("");
+
   // Import states
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -55,10 +58,12 @@ export default function BankSoalPage() {
       ]);
       setMapelOptions([
         { value: "", label: "-- Pilih Mapel --" },
-        ...(Array.isArray(mapelRes) ? mapelRes : []).map((m) => ({
-          value: m.id.toString(),
-          label: m.nama,
-        })),
+        ...(Array.isArray(mapelRes) ? mapelRes : [])
+          .sort((a, b) => a.nama.localeCompare(b.nama))
+          .map((m) => ({
+            value: m.id.toString(),
+            label: m.nama,
+          })),
       ]);
       setKelasOptions([
         { value: "", label: "-- Pilih Kelas --" },
@@ -149,12 +154,47 @@ export default function BankSoalPage() {
         const mappedData = jsonData
           .map((row) => ({
             soal: row["soal"] || row["Soal"] || row["Pertanyaan"] || "",
-            opsi_a: row["opsi_a"] || row["Opsi A"] || row["A"] || "",
-            opsi_b: row["opsi_b"] || row["Opsi B"] || row["B"] || "",
-            opsi_c: row["opsi_c"] || row["Opsi C"] || row["C"] || "",
-            opsi_d: row["opsi_d"] || row["Opsi D"] || row["D"] || "",
-            opsi_e: row["opsi_e"] || row["Opsi E"] || row["E"] || "",
-            jawaban: row["jawaban"] || row["Jawaban"] || row["Kunci"] || "A",
+            opsi_a:
+              row["opsi_a"] ||
+              row["Opsi A"] ||
+              row["Pilihan A"] ||
+              row["Pil A"] ||
+              row["A"] ||
+              "",
+            opsi_b:
+              row["opsi_b"] ||
+              row["Opsi B"] ||
+              row["Pilihan B"] ||
+              row["Pil B"] ||
+              row["B"] ||
+              "",
+            opsi_c:
+              row["opsi_c"] ||
+              row["Opsi C"] ||
+              row["Pilihan C"] ||
+              row["Pil C"] ||
+              row["C"] ||
+              "",
+            opsi_d:
+              row["opsi_d"] ||
+              row["Opsi D"] ||
+              row["Pilihan D"] ||
+              row["Pil D"] ||
+              row["D"] ||
+              "",
+            opsi_e:
+              row["opsi_e"] ||
+              row["Opsi E"] ||
+              row["Pilihan E"] ||
+              row["Pil E"] ||
+              row["E"] ||
+              "",
+            jawaban:
+              row["jawaban"] ||
+              row["Jawaban"] ||
+              row["Kunci Jawaban"] ||
+              row["Kunci"] ||
+              "A",
             bobot:
               row["bobot"] !== undefined
                 ? row["bobot"]
@@ -204,9 +244,21 @@ export default function BankSoalPage() {
   };
 
   const columns = [
-    { label: "ID", key: "id", width: "80px" },
-    { label: "Guru", key: "nama_guru" },
     { label: "Mapel", key: "nama_mapel" },
+    {
+      label: "SMT",
+      key: "smt",
+      width: "80px",
+      render: (row) => {
+        const mapel = row.nama_mapel || "";
+        const smt = mapel.length > 0 ? mapel.slice(-1) : "-";
+        return (
+          <div className="text-center font-medium bg-gray-100 rounded px-2 py-1">
+            {smt}
+          </div>
+        );
+      },
+    },
     { label: "Kelas", key: "nama_kelas" },
     {
       label: "Pertanyaan",
@@ -280,10 +332,44 @@ export default function BankSoalPage() {
     },
   ];
 
+  const filteredData = (Array.isArray(data) ? data : []).filter((item) => {
+    if (filterMapel && item.id_mapel?.toString() !== filterMapel) return false;
+    if (filterKelas && item.id_kelas?.toString() !== filterKelas) return false;
+    return true;
+  });
+
+  const customFilters = (
+    <div className="hidden md:flex gap-2">
+      <select
+        className="w-40 border border-gray-300 rounded px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        value={filterMapel}
+        onChange={(e) => setFilterMapel(e.target.value)}
+      >
+        {mapelOptions.map((m) => (
+          <option key={m.value} value={m.value}>
+            {m.label}
+          </option>
+        ))}
+      </select>
+      <select
+        className="w-32 border border-gray-300 rounded px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        value={filterKelas}
+        onChange={(e) => setFilterKelas(e.target.value)}
+      >
+        {kelasOptions.map((k) => (
+          <option key={k.value} value={k.value}>
+            {k.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <DashboardLayout>
       <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Bank Soal</h1>
+
         <div className="flex gap-2">
           <Button
             variant="secondary"
@@ -300,10 +386,11 @@ export default function BankSoalPage() {
 
       <DataTable
         columns={columns}
-        data={data}
+        data={filteredData}
         isLoading={loading}
         searchable={true}
         pagination={true}
+        customFilter={customFilters}
       />
 
       <ConfirmDialog
