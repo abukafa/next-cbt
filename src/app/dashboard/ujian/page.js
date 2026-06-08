@@ -56,11 +56,33 @@ export default function UjianPage() {
 
   const [formData, setFormData] = useState(initialForm);
   const [isEdit, setIsEdit] = useState(false);
+  const [availableSoal, setAvailableSoal] = useState(null);
 
   useEffect(() => {
     fetchData();
     fetchOptions();
   }, []);
+
+  useEffect(() => {
+    if (formData.id_guru && formData.id_mapel && formData.kelas) {
+      fetch("/api/ujian/check-soal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_guru: formData.id_guru,
+          id_mapel: formData.id_mapel,
+          kelas: formData.kelas,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setAvailableSoal(data.count);
+        })
+        .catch(() => setAvailableSoal(null));
+    } else {
+      setAvailableSoal(null);
+    }
+  }, [formData.id_guru, formData.id_mapel, formData.kelas]);
 
   const fetchData = async () => {
     try {
@@ -77,13 +99,14 @@ export default function UjianPage() {
 
   const fetchOptions = async () => {
     try {
-      const [guruRes, mapelRes, kelasRes, jurusanRes, guruMapelRes] = await Promise.all([
-        fetch("/api/guru").then((r) => r.json()),
-        fetch("/api/mapel").then((r) => r.json()),
-        fetch("/api/kelas").then((r) => r.json()),
-        fetch("/api/jurusan").then((r) => r.json()),
-        fetch("/api/guru-mapel").then((r) => r.json()),
-      ]);
+      const [guruRes, mapelRes, kelasRes, jurusanRes, guruMapelRes] =
+        await Promise.all([
+          fetch("/api/guru").then((r) => r.json()),
+          fetch("/api/mapel").then((r) => r.json()),
+          fetch("/api/kelas").then((r) => r.json()),
+          fetch("/api/jurusan").then((r) => r.json()),
+          fetch("/api/guru-mapel").then((r) => r.json()),
+        ]);
 
       setGuruMapelRelations(Array.isArray(guruMapelRes) ? guruMapelRes : []);
 
@@ -154,9 +177,15 @@ export default function UjianPage() {
   const handleChange = (field, value) => {
     if (field === "id_mapel" && value) {
       if (userRole !== "guru") {
-        const relation = guruMapelRelations.find((r) => r.id_mapel.toString() === value);
+        const relation = guruMapelRelations.find(
+          (r) => r.id_mapel.toString() === value,
+        );
         if (relation) {
-          setFormData((prev) => ({ ...prev, [field]: value, id_guru: relation.id_guru.toString() }));
+          setFormData((prev) => ({
+            ...prev,
+            [field]: value,
+            id_guru: relation.id_guru.toString(),
+          }));
           return;
         }
       }
@@ -171,7 +200,7 @@ export default function UjianPage() {
       const method = isEdit ? "PUT" : "POST";
 
       const payload = { ...formData };
-      
+
       if (payload.tgl_mulai) {
         payload.tgl_mulai = new Date(payload.tgl_mulai).toISOString();
       }
@@ -357,9 +386,18 @@ export default function UjianPage() {
             label="Mapel"
             value={formData.id_mapel}
             onChange={(e) => handleChange("id_mapel", e.target.value)}
-            options={userRole === "guru" 
-              ? mapelOptions.filter(m => m.value === "" || guruMapelRelations.some(r => r.id_guru === userKonId && r.id_mapel.toString() === m.value))
-              : mapelOptions
+            options={
+              userRole === "guru"
+                ? mapelOptions.filter(
+                    (m) =>
+                      m.value === "" ||
+                      guruMapelRelations.some(
+                        (r) =>
+                          r.id_guru === userKonId &&
+                          r.id_mapel.toString() === m.value,
+                      ),
+                  )
+                : mapelOptions
             }
             required
           />
@@ -369,7 +407,14 @@ export default function UjianPage() {
             onChange={(e) => handleChange("id_guru", e.target.value)}
             options={guruOptions}
             required
-            disabled={userRole === "guru" || (userRole !== "guru" && formData.id_mapel !== "" && guruMapelRelations.some(r => r.id_mapel.toString() === formData.id_mapel))}
+            disabled={
+              userRole === "guru" ||
+              (userRole !== "guru" &&
+                formData.id_mapel !== "" &&
+                guruMapelRelations.some(
+                  (r) => r.id_mapel.toString() === formData.id_mapel,
+                ))
+            }
           />
 
           <Select
@@ -410,14 +455,6 @@ export default function UjianPage() {
             onChange={(e) => handleChange("waktu", e.target.value)}
             required
           />
-          <Input
-            label="Jumlah Soal Ditampilkan"
-            type="number"
-            min="1"
-            value={formData.jumlah_soal}
-            onChange={(e) => handleChange("jumlah_soal", e.target.value)}
-            required
-          />
 
           <Select
             label="Jenis Soal"
@@ -429,12 +466,44 @@ export default function UjianPage() {
             ]}
             required
           />
-          <Input
-            label="Detil Jenis (Opsional)"
-            value={formData.detil_jenis}
-            onChange={(e) => handleChange("detil_jenis", e.target.value)}
-            placeholder="Kosongkan jika acak"
-          />
+
+          <div className="flex flex-col">
+            <Input
+              label="Jumlah Soal Ditampilkan"
+              type="number"
+              min="1"
+              value={formData.jumlah_soal}
+              onChange={(e) => handleChange("jumlah_soal", e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col">
+            {availableSoal !== null && (
+              <div className="text-sm">
+                <span className="font-medium text-gray-700">
+                  Bank Soal Aktif Tersedia:{" "}
+                  <strong
+                    className={
+                      availableSoal < formData.jumlah_soal
+                        ? "text-red-600"
+                        : "text-emerald-600"
+                    }
+                  >
+                    {availableSoal}
+                  </strong>
+                </span>
+                {availableSoal < formData.jumlah_soal && (
+                  <p className="text-red-500 text-xs mt-2 font-medium bg-red-50 p-2 rounded border border-red-100">
+                    ⚠️ Peringatan: Jumlah soal yang diminta (
+                    {formData.jumlah_soal}) melebihi ketersediaan soal di Bank
+                    Soal. Soal yang akan muncul di ujian siswa hanya sejumlah
+                    soal yang tersedia.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="md:col-span-2 flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
             <Button

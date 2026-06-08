@@ -215,7 +215,11 @@ export default function DashboardPage() {
             </h3>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={adminStats.chart_bank_soal}>
+                <BarChart
+                  data={[...(adminStats.chart_bank_soal || [])].sort((a, b) =>
+                    a.name.localeCompare(b.name),
+                  )}
+                >
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
@@ -451,7 +455,10 @@ export default function DashboardPage() {
 
                           let mapelName = exam.nama_mapel || "";
                           if (mapelName.length > 4) {
-                            mapelName = mapelName.substring(0, mapelName.length - 4);
+                            mapelName = mapelName.substring(
+                              0,
+                              mapelName.length - 4,
+                            );
                           }
 
                           return (
@@ -484,9 +491,7 @@ export default function DashboardPage() {
                                 {timeStr}
                               </td>
                               <td className="px-4 py-3 text-gray-800 border-r border-gray-200">
-                                <div className="font-semibold">
-                                  {mapelName}
-                                </div>
+                                <div className="font-semibold">{mapelName}</div>
                                 <div className="text-xs text-gray-500 mt-0.5">
                                   {exam.nama_ujian} &bull; Kelas {exam.kelas}{" "}
                                   {exam.jurusan}

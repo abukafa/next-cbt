@@ -23,10 +23,14 @@ export async function GET() {
       where: whereClause,
       orderBy: { id: "desc" },
     });
-    return NextResponse.json(data);
+    return new NextResponse(
+      JSON.stringify(data, (key, value) => (typeof value === "bigint" ? value.toString() : value)),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   } catch (error) {
+    console.error("API Mapel Error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch data" },
+      { error: "Failed to fetch data", details: error.message },
       { status: 500 }
     );
   }

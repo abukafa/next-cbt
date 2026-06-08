@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { DataTable, Button, Modal, Input, ConfirmDialog } from "@/components/ui";
 
 export default function MapelTable() {
+  const { data: session } = useSession();
+  const isRoot = session?.user?.username === 'root';
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,6 +99,8 @@ export default function MapelTable() {
           <Button 
             size="sm" 
             variant="danger" 
+            disabled={!isRoot}
+            title={!isRoot ? "Hanya admin root yang dapat menghapus" : ""}
             onClick={() => {
               setSelectedId(row.id);
               setIsConfirmOpen(true);

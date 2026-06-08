@@ -212,6 +212,7 @@ export function DataTable({
   className = "",
   searchable = false,
   pagination = false,
+  customFilter = null,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState(null);
@@ -303,6 +304,7 @@ export function DataTable({
           </div>
 
           <div className="flex gap-4 items-center w-full sm:w-auto">
+            {customFilter}
             {searchable && (
               <input
                 type="text"

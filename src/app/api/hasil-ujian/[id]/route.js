@@ -23,13 +23,30 @@ export async function GET(request, { params }) {
     }
 
     // Authorization check
-    if (session.user.role === "guru" && tes.id_guru !== parseInt(session.user.kon_id)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (session.user.role === "guru") {
+      const isCreator = tes.id_guru === parseInt(session.user.kon_id);
+      const isPengampu = await prisma.trGuruMapel.findFirst({
+        where: { id_guru: parseInt(session.user.kon_id), id_mapel: tes.id_mapel }
+      });
+      if (!isCreator && !isPengampu) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     // Fetch Mapel & Guru
     const mapel = await prisma.mapel.findUnique({ where: { id: tes.id_mapel } });
-    const guru = await prisma.guru.findUnique({ where: { id: tes.id_guru } });
+    
+    let displayGuruName = "Tanpa Pengampu / Admin";
+    const pengampuRel = await prisma.trGuruMapel.findFirst({
+      where: { id_mapel: tes.id_mapel }
+    });
+    if (pengampuRel) {
+      const pengampu = await prisma.guru.findUnique({ where: { id: pengampuRel.id_guru } });
+      if (pengampu) displayGuruName = pengampu.nama;
+    } else {
+      const originalCreator = await prisma.guru.findUnique({ where: { id: tes.id_guru } });
+      if (originalCreator) displayGuruName = originalCreator.nama;
+    }
 
     // Fetch Participants
     const participantsRaw = await prisma.trIkutUjian.findMany({
@@ -66,7 +83,7 @@ export async function GET(request, { params }) {
       tes: {
         ...tes,
         nama_mapel: mapel?.nama || "Unknown",
-        nama_guru: guru?.nama || "Unknown"
+        nama_guru: displayGuruName
       },
       participants
     });
@@ -103,8 +120,14 @@ export async function POST(request, { params }) {
       where: { id: ikut.id_tes }
     });
 
-    if (session.user.role === "guru" && tes.id_guru !== parseInt(session.user.kon_id)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (session.user.role === "guru") {
+      const isCreator = tes.id_guru === parseInt(session.user.kon_id);
+      const isPengampu = await prisma.trGuruMapel.findFirst({
+        where: { id_guru: parseInt(session.user.kon_id), id_mapel: tes.id_mapel }
+      });
+      if (!isCreator && !isPengampu) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     if (action === "reset") {
