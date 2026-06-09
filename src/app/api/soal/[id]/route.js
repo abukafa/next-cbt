@@ -26,25 +26,6 @@ export async function PUT(request, { params }) {
     
     if (!existingSoal) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    // SECURITY CHECK: Is this used in an active exam with participants?
-    const relatedExams = await prisma.trGuruTes.findMany({
-      where: { id_guru: existingSoal.id_guru, id_mapel: existingSoal.id_mapel },
-      select: { id: true }
-    });
-
-    if (relatedExams.length > 0) {
-      const examIds = relatedExams.map(e => e.id);
-      const participantsCount = await prisma.trIkutUjian.count({
-        where: { id_tes: { in: examIds } }
-      });
-
-      if (participantsCount > 0) {
-        return NextResponse.json(
-          { error: "Tidak bisa diubah karena soal ini terikat pada ujian yang sedang atau sudah dikerjakan." }, 
-          { status: 403 }
-        );
-      }
-    }
 
     const data = await prisma.soal.update({
       where: { id: parseInt(id) },

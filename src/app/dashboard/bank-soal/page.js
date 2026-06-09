@@ -148,7 +148,8 @@ export default function BankSoalPage() {
         const worksheet = workbook.Sheets[sheetName];
 
         // Convert to JSON
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        // Menggunakan { raw: false } memastikan format tanggal (seperti 20 Mei 1908) dibaca sebagai string sesuai tampilannya di Excel, bukan sebagai serial number Excel
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
         // Expected columns: soal, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, jawaban, bobot
         const mappedData = jsonData

@@ -474,8 +474,25 @@ export default function CBTPlayerPage({ params }) {
                 let optContent = currentQ?.[`opsi_${opt.toLowerCase()}`];
                 if (!optContent || optContent === "<p><br></p>") return null;
 
-                // Hapus simbol ##### peninggalan aplikasi lama
-                optContent = optContent.replace(/^#####/, "");
+                // Handle legacy format FILE#####TEXT
+                let optMedia = "";
+                let optText = optContent;
+                
+                if (optContent.includes("#####")) {
+                  const parts = optContent.split("#####");
+                  optMedia = parts[0].trim();
+                  optText = parts[1].trim();
+                } else if (optContent.startsWith("#####")) {
+                  optText = optContent.replace(/^#####/, "").trim();
+                }
+
+                // Jika optMedia berisi HTML (korup dari editor lama), kita abaikan gambarnya
+                // dan gabungkan dengan teks aslinya (tanpa peringatan) sebagai antisipasi jika guru belum memperbaiki.
+                const isCorruptedMedia = optMedia.includes("<") || optMedia.includes(">");
+                if (isCorruptedMedia) {
+                  optText = `${optMedia}<br/>${optText}`;
+                  optMedia = "";
+                }
 
                 const isSelected = answers[currentQ.id] === opt;
 
@@ -500,10 +517,20 @@ export default function CBTPlayerPage({ params }) {
                     <div className="flex-1 text-gray-800 font-medium pt-0.5 select-none">
                       <div className="flex gap-2">
                         <span className="font-bold">{opt}.</span>
-                        <div
-                          dangerouslySetInnerHTML={{ __html: optContent }}
-                          className="prose-sm max-w-none inline-block m-0 p-0"
-                        />
+                        <div className="flex flex-col gap-2">
+                          {optMedia && !isCorruptedMedia && (
+                            <img
+                              src={`/uploads/${optMedia}`}
+                              alt={`Opsi ${opt}`}
+                              className="max-h-32 max-w-full object-contain rounded border border-gray-200"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          )}
+                          <div
+                            dangerouslySetInnerHTML={{ __html: optText }}
+                            className="prose-sm max-w-none inline-block m-0 p-0"
+                          />
+                        </div>
                       </div>
                     </div>
                   </label>
