@@ -27,10 +27,6 @@ export default function EditSoalPage({ params }) {
 
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Edit Soal</h1>
-        <p className="text-gray-500 mt-1">Lakukan perubahan pada soal ini.</p>
-      </div>
 
       {loading ? (
         <div className="text-center p-8 text-gray-500">Memuat data soal...</div>

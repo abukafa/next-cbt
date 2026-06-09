@@ -67,10 +67,21 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
       // No ##### delimiter found, assume it's pure text
       return { text: parts[0], file: "" };
     }
+
+    let filePart = parts[0] || "";
+    let textPart = parts[1] || "";
+
+    // Deteksi jika filePart mengandung tag HTML, berarti itu adalah teks yang korup (tertimpa)
+    // Gabungkan keduanya ke dalam editor agar guru bisa melihat semuanya (sama seperti di UI Siswa)
+    if (filePart.includes("<") || filePart.includes(">")) {
+      textPart = `${filePart}<br/>${textPart}`;
+      filePart = ""; // Kosongkan filePart agar tidak dianggap gambar
+    }
+
     // CandyCBT format for options: FILE#####TEXT
     return {
-      file: parts[0] || "",
-      text: parts[1] || "",
+      file: filePart,
+      text: textPart,
     };
   };
 
@@ -120,14 +131,25 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
     }
   }, [initialData, userRole, userKonId]);
 
+  const [soalIds, setSoalIds] = useState([]);
+
   const fetchOptions = async () => {
     try {
-      const [guruRes, mapelRes, kelasRes, guruMapelRes] = await Promise.all([
-        fetch("/api/guru").then((r) => r.json()),
-        fetch("/api/mapel").then((r) => r.json()),
-        fetch("/api/kelas").then((r) => r.json()),
-        fetch("/api/guru-mapel").then((r) => r.json()),
-      ]);
+      const [guruRes, mapelRes, kelasRes, guruMapelRes, soalRes] =
+        await Promise.all([
+          fetch("/api/guru").then((r) => r.json()),
+          fetch("/api/mapel").then((r) => r.json()),
+          fetch("/api/kelas").then((r) => r.json()),
+          fetch("/api/guru-mapel").then((r) => r.json()),
+          isEdit
+            ? fetch("/api/soal").then((r) => r.json())
+            : Promise.resolve([]),
+        ]);
+
+      if (isEdit && Array.isArray(soalRes)) {
+        const ids = soalRes.map((s) => s.id).sort((a, b) => a - b);
+        setSoalIds(ids);
+      }
 
       setGuruMapelRelations(Array.isArray(guruMapelRes) ? guruMapelRes : []);
 
@@ -180,7 +202,7 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, action = "stay") => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -211,8 +233,20 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
       });
 
       if (res.ok) {
-        router.push("/dashboard/bank-soal");
-        router.refresh();
+        if (action === "back") {
+          router.push("/dashboard/bank-soal");
+          router.refresh();
+        } else {
+          // Tetap di halaman edit, atau navigasi ke soal prev/next
+          alert("Berhasil menyimpan data!");
+          router.refresh();
+
+          if (action === "prev" && prevId) {
+            router.push(`/dashboard/bank-soal/edit/${prevId}`);
+          } else if (action === "next" && nextId) {
+            router.push(`/dashboard/bank-soal/edit/${nextId}`);
+          }
+        }
       } else {
         alert("Gagal menyimpan data!");
       }
@@ -251,121 +285,165 @@ export default function SoalForm({ initialData = null, isEdit = false }) {
     </div>
   );
 
+  const currentIndex = soalIds.indexOf(initialData?.id);
+  const prevId = currentIndex > 0 ? soalIds[currentIndex - 1] : null;
+  const nextId =
+    currentIndex >= 0 && currentIndex < soalIds.length - 1
+      ? soalIds[currentIndex + 1]
+      : null;
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100"
-    >
-      {/* Top Meta Section */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-6 border-b border-gray-200">
-        <Select
-          label="Mapel"
-          value={formData.id_mapel}
-          onChange={(e) => handleChange("id_mapel", e.target.value)}
-          options={
-            userRole === "guru"
-              ? mapelOptions.filter(
-                  (m) =>
-                    m.value === "" ||
-                    guruMapelRelations.some(
-                      (r) =>
-                        r.id_guru === userKonId &&
-                        r.id_mapel.toString() === m.value,
-                    ),
-                )
-              : mapelOptions
-          }
-          required
-        />
-        <Select
-          label="Guru"
-          value={formData.id_guru}
-          onChange={(e) => handleChange("id_guru", e.target.value)}
-          options={guruOptions}
-          required
-          disabled={
-            userRole === "guru" ||
-            (userRole !== "guru" &&
-              formData.id_mapel !== "" &&
-              guruMapelRelations.some(
-                (r) => r.id_mapel.toString() === formData.id_mapel,
-              ))
-          }
-        />
-        <Select
-          label="Kelas"
-          value={formData.id_kelas}
-          onChange={(e) => handleChange("id_kelas", e.target.value)}
-          options={kelasOptions}
-          required
-        />
-        <Input
-          label="Bobot Nilai"
-          type="number"
-          value={formData.bobot}
-          onChange={(e) => handleChange("bobot", e.target.value)}
-          required
-        />
-        <div className="md:col-span-4 text-center mt-[-10px]">
-          {parseInt(formData.bobot || 0) === 0 ? (
-            <span className="text-sm italic font-medium text-red-500">
-              * Soal tidak aktif dan tidak akan dimunculkan saat ujian.
-            </span>
-          ) : (
-            <span className="text-sm italic font-medium text-teal-600">
-              * Soal aktif. Jawaban benar mendapatkan {formData.bobot} poin.
-            </span>
-          )}
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isEdit ? "Edit Soal" : "Tambah Soal Baru"}
+          </h1>
+          <p className="text-gray-500 mt-1">
+            {isEdit
+              ? "Lakukan perubahan pada soal ini."
+              : "Buat soal ujian baru menggunakan editor di bawah ini."}
+          </p>
         </div>
+
+        {isEdit && (
+          <div className="flex justify-center  gap-2 mt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={loading || !prevId}
+              onClick={(e) => handleSubmit(e, "prev")}
+            >
+              &larr; Simpan & Prev
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={loading || !nextId}
+              onClick={(e) => handleSubmit(e, "next")}
+            >
+              Simpan & Next &rarr;
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Question Editor */}
-      <div>
-        <h3 className="text-lg font-bold text-gray-900 mb-4">
-          Pertanyaan Utama
-        </h3>
-        {renderEditor("Teks Pertanyaan", "soal")}
-      </div>
-
-      {/* Options Editor */}
-      <div className="border-gray-200 pt-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">
-          Pilihan Jawaban
-        </h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-4">
-          {renderEditor("Pilihan A", "opsi_a")}
-          {renderEditor("Pilihan B", "opsi_b")}
-          {renderEditor("Pilihan C", "opsi_c")}
-          {renderEditor("Pilihan D", "opsi_d")}
-          {jumlahPG >= 5 && renderEditor("Pilihan E", "opsi_e")}
-        </div>
-      </div>
-
-      {/* Answer Key */}
-      <div className="border-t border-gray-200 pt-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="w-full md:w-64">
+      <form
+        onSubmit={(e) => handleSubmit(e, "back")}
+        className="space-y-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100"
+      >
+        {/* Top Meta Section */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-6 border-b border-gray-200">
           <Select
-            label="Kunci Jawaban"
-            value={formData.jawaban}
-            onChange={(e) => handleChange("jawaban", e.target.value)}
-            options={jawabanOptions}
+            label="Mapel"
+            value={formData.id_mapel}
+            onChange={(e) => handleChange("id_mapel", e.target.value)}
+            options={
+              userRole === "guru"
+                ? mapelOptions.filter(
+                    (m) =>
+                      m.value === "" ||
+                      guruMapelRelations.some(
+                        (r) =>
+                          r.id_guru === userKonId &&
+                          r.id_mapel.toString() === m.value,
+                      ),
+                  )
+                : mapelOptions
+            }
             required
           />
+          <Select
+            label="Guru"
+            value={formData.id_guru}
+            onChange={(e) => handleChange("id_guru", e.target.value)}
+            options={guruOptions}
+            required
+            disabled={
+              userRole === "guru" ||
+              (userRole !== "guru" &&
+                formData.id_mapel !== "" &&
+                guruMapelRelations.some(
+                  (r) => r.id_mapel.toString() === formData.id_mapel,
+                ))
+            }
+          />
+          <Select
+            label="Kelas"
+            value={formData.id_kelas}
+            onChange={(e) => handleChange("id_kelas", e.target.value)}
+            options={kelasOptions}
+            required
+          />
+          <Input
+            label="Bobot Nilai"
+            type="number"
+            value={formData.bobot}
+            onChange={(e) => handleChange("bobot", e.target.value)}
+            required
+          />
+          <div className="md:col-span-4 text-center mt-[-10px]">
+            {parseInt(formData.bobot || 0) === 0 ? (
+              <span className="text-sm italic font-medium text-red-500">
+                * Soal tidak aktif dan tidak akan dimunculkan saat ujian.
+              </span>
+            ) : (
+              <span className="text-sm italic font-medium text-teal-600">
+                * Soal aktif. Jawaban benar mendapatkan {formData.bobot} poin.
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="flex gap-4 self-end md:self-auto">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => router.push("/dashboard/bank-soal")}
-          >
-            Batal
-          </Button>
-          <Button type="submit" variant="primary" disabled={loading}>
-            {loading ? "Menyimpan..." : "Simpan Soal"}
-          </Button>
+        {/* Question Editor */}
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
+            Pertanyaan Utama
+          </h3>
+          {renderEditor("Teks Pertanyaan", "soal")}
         </div>
-      </div>
-    </form>
+
+        {/* Options Editor */}
+        <div className="border-gray-200 pt-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
+            Pilihan Jawaban
+          </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-4">
+            {renderEditor("Pilihan A", "opsi_a")}
+            {renderEditor("Pilihan B", "opsi_b")}
+            {renderEditor("Pilihan C", "opsi_c")}
+            {renderEditor("Pilihan D", "opsi_d")}
+            {jumlahPG >= 5 && renderEditor("Pilihan E", "opsi_e")}
+          </div>
+        </div>
+
+        {/* Answer Key */}
+        <div className="border-t border-gray-200 pt-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="w-full md:w-64">
+            <Select
+              label="Kunci Jawaban"
+              value={formData.jawaban}
+              onChange={(e) => handleChange("jawaban", e.target.value)}
+              options={jawabanOptions}
+              required
+            />
+          </div>
+
+          <div className="flex gap-2 flex-wrap self-end md:self-auto justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => router.push("/dashboard/bank-soal")}
+            >
+              Kembali
+            </Button>
+
+            <Button type="submit" variant="primary" disabled={loading}>
+              {loading ? "Menyimpan..." : "Simpan Soal"}
+            </Button>
+          </div>
+        </div>
+      </form>
+    </div>
   );
 }
