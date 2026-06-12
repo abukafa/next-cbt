@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { DashboardLayout } from "@/components/layout";
 import { Printer, Filter, Settings2, User } from "lucide-react";
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export default function CetakKartuPage() {
-  const [loadingOpts, setLoadingOpts] = useState(true);
-  const [kelasOptions, setKelasOptions] = useState([]);
-  const [jurusanOptions, setJurusanOptions] = useState([]);
+  const { data: optionsData, isLoading: loadingOpts } = useSWR("/api/cetak-kartu", fetcher);
+  const kelasOptions = optionsData?.kelasOptions || [];
+  const jurusanOptions = optionsData?.jurusanOptions || [];
 
   const [filterKelas, setFilterKelas] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
@@ -25,7 +28,6 @@ export default function CetakKartuPage() {
   const [logoBase64, setLogoBase64] = useState(null);
 
   useEffect(() => {
-    fetchOptions();
     // Load logo from local storage
     const savedLogo = localStorage.getItem("cbt_logo");
     if (savedLogo) {
@@ -51,20 +53,7 @@ export default function CetakKartuPage() {
     localStorage.removeItem("cbt_logo");
   };
 
-  const fetchOptions = async () => {
-    try {
-      const res = await fetch("/api/cetak-kartu");
-      if (res.ok) {
-        const data = await res.json();
-        setKelasOptions(data.kelasOptions);
-        setJurusanOptions(data.jurusanOptions);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingOpts(false);
-    }
-  };
+  // Options fetching handled by SWR
 
   const handleFetchStudents = async (e) => {
     e.preventDefault();

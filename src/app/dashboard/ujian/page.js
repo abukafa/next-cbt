@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { DashboardLayout } from "@/components/layout";
 import {
   DataTable,
@@ -12,9 +13,10 @@ import {
 } from "@/components/ui";
 import { useSession } from "next-auth/react";
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export default function UjianPage() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: ujianData, error, isLoading, mutate } = useSWR("/api/ujian", fetcher);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
@@ -59,7 +61,6 @@ export default function UjianPage() {
   const [availableSoal, setAvailableSoal] = useState(null);
 
   useEffect(() => {
-    fetchData();
     fetchOptions();
   }, []);
 
@@ -84,18 +85,7 @@ export default function UjianPage() {
     }
   }, [formData.id_guru, formData.id_mapel, formData.kelas]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/ujian");
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Data fetching handled by SWR
 
   const fetchOptions = async () => {
     try {
@@ -217,7 +207,7 @@ export default function UjianPage() {
 
       if (res.ok) {
         setIsModalOpen(false);
-        fetchData();
+        mutate();
       } else {
         alert("Gagal menyimpan data ujian.");
       }
@@ -233,7 +223,7 @@ export default function UjianPage() {
       });
       if (res.ok) {
         setIsConfirmOpen(false);
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -256,7 +246,7 @@ export default function UjianPage() {
       });
 
       if (res.ok) {
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -357,8 +347,8 @@ export default function UjianPage() {
 
       <DataTable
         columns={columns}
-        data={data}
-        isLoading={loading}
+        data={Array.isArray(ujianData) ? ujianData : []}
+        isLoading={isLoading}
         onAdd={() => handleOpenModal()}
         searchable={true}
         pagination={true}

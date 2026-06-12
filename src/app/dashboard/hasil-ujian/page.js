@@ -1,33 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import { DashboardLayout } from "@/components/layout";
 import { BookOpen, User, Calendar, Users, Eye, Search } from "lucide-react";
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export default function HasilUjianPage() {
-  const [exams, setExams] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
 
-  useEffect(() => {
-    fetchExams();
-  }, []);
-
-  const fetchExams = async () => {
-    try {
-      const res = await fetch("/api/hasil-ujian");
-      if (res.ok) {
-        const data = await res.json();
-        setExams(data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: examsData, error, isLoading } = useSWR("/api/hasil-ujian", fetcher);
+  
+  const exams = Array.isArray(examsData) ? examsData : [];
 
   const filteredExams = exams.filter(
     (tes) =>
@@ -58,7 +45,7 @@ export default function HasilUjianPage() {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center p-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
         </div>

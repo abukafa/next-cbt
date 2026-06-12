@@ -102,73 +102,55 @@ export async function GET(request) {
     // ADMIN/GURU ONLY SECTION
     // ========================================================
     if (role !== "siswa") {
-      // Card 1: Total Guru (Distinct Nama)
-      const distinctGuru = await prisma.guru.findMany({
-        select: { nama: true },
-        distinct: ["nama"],
-      });
+      // Execute all aggregation queries in parallel
+      const [
+        distinctGuru,
+        total_siswa,
+        allMapelsForCard,
+        guruMapelRaw,
+        siswaJurusanRaw,
+        bankSoalRaw
+      ] = await Promise.all([
+        prisma.guru.findMany({ select: { nama: true }, distinct: ["nama"] }),
+        prisma.siswa.count(),
+        prisma.mapel.findMany({ select: { nama: true } }),
+        prisma.trGuruMapel.groupBy({ by: ["id_guru"], _count: { _all: true } }),
+        prisma.siswa.groupBy({ by: ["jurusan"], _count: { _all: true } }),
+        prisma.soal.groupBy({ by: ["id_mapel"], _count: { _all: true } })
+      ]);
+
       const total_guru = distinctGuru.length;
 
-      // Card 2: Total Siswa (Count)
-      const total_siswa = await prisma.siswa.count();
-
-      // Card 3: Total Mapel (Distinct left(nama,0,len(nama)-5))
-      // Because Prisma doesn't have substring aggregation, we do it in JS
-      const allMapelsForCard = await prisma.mapel.findMany({
-        select: { nama: true },
-      });
       const uniqueBaseMapels = new Set(
         allMapelsForCard.map((m) => {
           let n = m.nama.trim();
-          if (n.length > 5) {
-            return n.substring(0, n.length - 5).trim();
-          }
+          if (n.length > 5) return n.substring(0, n.length - 5).trim();
           return n;
         }),
       );
       const total_mapel = uniqueBaseMapels.size;
 
-      // Row 2 - Bar Chart: Guru Mapel count per guru
-      const guruMapelRaw = await prisma.trGuruMapel.groupBy({
-        by: ["id_guru"],
-        _count: { _all: true },
-      });
+      // Map details
       const guruIds = guruMapelRaw.map((g) => g.id_guru);
       const guruDetails = await prisma.guru.findMany({
         where: { id: { in: guruIds } },
         select: { id: true, nama: true },
       });
+
       const chart_guru_mapel = guruMapelRaw.map((item) => {
         const guru = guruDetails.find((g) => g.id === item.id_guru);
-        // Shorten name for chart if too long
         let shortName = guru ? guru.nama.split(" ")[0] : `Guru ${item.id_guru}`;
-        return {
-          name: shortName,
-          Mapel: item._count._all,
-        };
+        return { name: shortName, Mapel: item._count._all };
       });
 
-      // Row 2 - Pie Chart: Siswa count per jurusan
-      const siswaJurusanRaw = await prisma.siswa.groupBy({
-        by: ["jurusan"],
-        _count: { _all: true },
-      });
       const chart_siswa_jurusan = siswaJurusanRaw.map((item) => ({
         name: item.jurusan || "Unknown",
         value: item._count._all,
       }));
 
-      // Row 3 - Bar Chart: Bank Soal count per mapel
-      const bankSoalRaw = await prisma.soal.groupBy({
-        by: ["id_mapel"],
-        _count: { _all: true },
-      });
       const chart_bank_soal = bankSoalRaw.map((item) => {
         const mapel = mapelMap[item.id_mapel];
-        return {
-          name: mapel || `Mapel ${item.id_mapel}`,
-          Soal: item._count._all,
-        };
+        return { name: mapel || `Mapel ${item.id_mapel}`, Soal: item._count._all };
       });
 
       data.admin_stats = {

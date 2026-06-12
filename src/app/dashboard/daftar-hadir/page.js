@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { DashboardLayout } from "@/components/layout";
 import { Printer, Filter, Settings2, FileText } from "lucide-react";
 import { calculateInterpolatedScore } from "@/lib/scoring";
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export default function DaftarHadirPage() {
-  const [exams, setExams] = useState([]);
-  const [loadingOpts, setLoadingOpts] = useState(true);
+  const { data: optionsData, isLoading: loadingOpts } = useSWR("/api/daftar-hadir", fetcher);
+  const exams = optionsData?.exams || [];
 
   const [selectedExamId, setSelectedExamId] = useState("");
   const [examDetail, setExamDetail] = useState(null);
@@ -26,7 +29,6 @@ export default function DaftarHadirPage() {
   const [logoBase64, setLogoBase64] = useState(null);
 
   useEffect(() => {
-    fetchExams();
     // Load logo from local storage
     const savedLogo = localStorage.getItem("cbt_logo");
     if (savedLogo) {
@@ -52,19 +54,7 @@ export default function DaftarHadirPage() {
     localStorage.removeItem("cbt_logo");
   };
 
-  const fetchExams = async () => {
-    try {
-      const res = await fetch("/api/daftar-hadir");
-      if (res.ok) {
-        const data = await res.json();
-        setExams(data.exams || []);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingOpts(false);
-    }
-  };
+  // Options fetching handled by SWR
 
   const handleFetchAttendance = async (e) => {
     e.preventDefault();

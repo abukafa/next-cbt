@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import { DashboardLayout } from "@/components/layout";
 import { StatCard } from "@/components/ui";
 import { Users, BookOpen, FileText } from "lucide-react";
@@ -30,31 +31,14 @@ const COLORS = [
   "#f97316",
 ];
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export default function DashboardPage() {
   const { data: session } = useSession();
   const isSiswa = session?.user?.role === "siswa";
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [filterKelas, setFilterKelas] = useState("Semua");
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const res = await fetch("/api/dashboard");
-      const json = await res.json();
-      if (res.ok) {
-        setData(json);
-      }
-    } catch (err) {
-      console.error("Failed to fetch dashboard data", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, error, isLoading } = useSWR("/api/dashboard", fetcher);
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -64,7 +48,7 @@ export default function DashboardPage() {
     });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">

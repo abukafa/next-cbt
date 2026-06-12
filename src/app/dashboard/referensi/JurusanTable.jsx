@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import { useSession } from "next-auth/react";
 import {
   DataTable,
@@ -10,11 +11,12 @@ import {
   ConfirmDialog,
 } from "@/components/ui";
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export default function JurusanTable() {
   const { data: session } = useSession();
   const isRoot = session?.user?.username === 'root';
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: jurusanData, error, isLoading, mutate } = useSWR("/api/jurusan", fetcher);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
@@ -23,22 +25,7 @@ export default function JurusanTable() {
   const [formData, setFormData] = useState(initialForm);
   const [isEdit, setIsEdit] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/jurusan");
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Data fetching handled by SWR
 
   const handleOpenModal = (item = null) => {
     if (item) {
@@ -69,7 +56,7 @@ export default function JurusanTable() {
 
       if (res.ok) {
         setIsModalOpen(false);
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -83,7 +70,7 @@ export default function JurusanTable() {
       });
       if (res.ok) {
         setIsConfirmOpen(false);
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -131,8 +118,8 @@ export default function JurusanTable() {
 
       <DataTable
         columns={columns}
-        data={data}
-        isLoading={loading}
+        data={Array.isArray(jurusanData) ? jurusanData : []}
+        isLoading={isLoading}
         onAdd={() => handleOpenModal()}
       />
 
