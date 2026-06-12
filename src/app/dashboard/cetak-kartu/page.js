@@ -75,7 +75,7 @@ export default function CetakKartuPage() {
       );
       if (res.ok) {
         const data = await res.json();
-        setStudents(data.students);
+        setStudents(data.students || []);
       }
     } catch (error) {
       console.error(error);
@@ -98,7 +98,7 @@ export default function CetakKartuPage() {
         </div>
         <button
           onClick={() => window.print()}
-          disabled={students.length === 0}
+          disabled={!students || students.length === 0}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-medium px-6 py-2.5 rounded-lg transition-colors"
         >
           <Printer size={20} /> Cetak Kartu
@@ -109,7 +109,7 @@ export default function CetakKartuPage() {
         {/* Filter Card */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h2 className="text-lg font-bold flex items-center gap-2 mb-4 border-b pb-2">
-            <Filter size={18} className="text-emerald-500" /> Filter Peserta
+            <Filter size={18} className="text-emerald-500" /> Peserta Ujian
           </h2>
           <form onSubmit={handleFetchStudents} className="space-y-4">
             <div>
@@ -122,7 +122,7 @@ export default function CetakKartuPage() {
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500"
                 disabled={loadingOpts}
               >
-                <option value="">-- Semua Kelas --</option>
+                <option value="">-- Pilih Kelas --</option>
                 {kelasOptions.map((k) => (
                   <option key={k} value={k}>
                     {k}
@@ -247,7 +247,7 @@ export default function CetakKartuPage() {
       </div>
 
       {/* Print Preview Area */}
-      {students.length > 0 ? (
+      {students && students.length > 0 ? (
         <div className="print:m-0 print:p-0">
           <h3 className="text-gray-500 text-sm font-bold mb-4 uppercase tracking-wider print:hidden">
             Pratinjau Kartu Ujian ({students.length} Peserta)

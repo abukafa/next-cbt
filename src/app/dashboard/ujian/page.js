@@ -129,13 +129,14 @@ export default function UjianPage() {
           })),
       ]);
       setKelasOptions([
-        { value: "", label: "-- Semua Kelas --" },
+        { value: "", label: "-- Pilih Kelas --" },
         ...(Array.isArray(kelasRes) ? kelasRes : []).map((k) => ({
           value: k.kelas,
           label: k.kelas,
         })),
       ]);
       setJurusanOptions([
+        { value: "", label: "-- Pilih Jurusan --" },
         ...(Array.isArray(jurusanRes) ? jurusanRes : []).map((j) => ({
           value: j.jurusan,
           label: j.jurusan,
