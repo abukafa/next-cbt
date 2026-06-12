@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import { DashboardLayout } from "@/components/layout";
 import {
   DataTable,
@@ -10,9 +11,10 @@ import {
   ConfirmDialog,
 } from "@/components/ui";
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export default function GuruPage() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: guruData, error, isLoading, mutate } = useSWR("/api/guru", fetcher);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
@@ -21,22 +23,7 @@ export default function GuruPage() {
   const [formData, setFormData] = useState(initialForm);
   const [isEdit, setIsEdit] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/guru");
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Data fetching handled by SWR
 
   const handleOpenModal = (item = null) => {
     if (item) {
@@ -68,7 +55,7 @@ export default function GuruPage() {
 
       if (res.ok) {
         setIsModalOpen(false);
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -83,7 +70,7 @@ export default function GuruPage() {
         body: JSON.stringify({ action: "toggle_single", guruId }),
       });
       if (res.ok) {
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -115,7 +102,7 @@ export default function GuruPage() {
             ? `Berhasil mengaktifkan ${result.count || 0} user baru.`
             : "Berhasil menonaktifkan seluruh user guru.",
         );
-        fetchData();
+        mutate();
       } else {
         alert(result.error || "Gagal melakukan aksi.");
       }
@@ -131,7 +118,7 @@ export default function GuruPage() {
       });
       if (res.ok) {
         setIsConfirmOpen(false);
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -212,8 +199,8 @@ export default function GuruPage() {
 
       <DataTable
         columns={columns}
-        data={data}
-        isLoading={loading}
+        data={Array.isArray(guruData) ? guruData : []}
+        isLoading={isLoading}
         searchable={true}
         pagination={true}
       />

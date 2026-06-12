@@ -66,6 +66,7 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
       submenu: [
         { label: "Hasil Ujian", href: "/dashboard/hasil-ujian" },
         { label: "Cetak Kartu", href: "/dashboard/cetak-kartu" },
+        { label: "Daftar Hadir", href: "/dashboard/daftar-hadir" },
       ],
     },
   ];

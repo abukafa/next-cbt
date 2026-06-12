@@ -51,7 +51,17 @@ export async function GET(request, { params }) {
     // Fetch Participants
     const participantsRaw = await prisma.trIkutUjian.findMany({
       where: { id_tes: tesId },
-      orderBy: { nilai: "desc" }
+      orderBy: { nilai: "desc" },
+      select: {
+        id: true,
+        id_user: true,
+        tgl_mulai: true,
+        tgl_selesai: true,
+        status: true,
+        jml_benar: true,
+        nilai: true,
+        nilai_bobot: true
+      }
     });
 
     // Get Siswa IDs directly (id_user in tr_ikut_ujian is actually m_siswa.id)

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import { DashboardLayout } from "@/components/layout";
 import {
   DataTable,
@@ -11,11 +12,11 @@ import {
   Select,
 } from "@/components/ui";
 import * as XLSX from "xlsx";
+const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function BankSoalPage() {
   const router = useRouter();
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: soalData, error, isLoading, mutate } = useSWR("/api/soal", fetcher);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
@@ -37,7 +38,6 @@ export default function BankSoalPage() {
   const [kelasOptions, setKelasOptions] = useState([]);
 
   useEffect(() => {
-    fetchData();
     fetchOptions();
   }, []);
 
@@ -77,18 +77,7 @@ export default function BankSoalPage() {
     }
   };
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/soal");
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // fetchData is now handled by SWR, so we remove the manual fetchData function.
 
   const handleDelete = async () => {
     try {
@@ -97,7 +86,7 @@ export default function BankSoalPage() {
       });
       if (res.ok) {
         setIsConfirmOpen(false);
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -108,11 +97,14 @@ export default function BankSoalPage() {
     const newBobot = currentBobot > 0 ? 0 : 1;
 
     // Optimistic UI update
-    setData((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, bobot: newBobot } : item,
-      ),
-    );
+    if (soalData) {
+      mutate(
+        soalData.map((item) =>
+          item.id === id ? { ...item, bobot: newBobot } : item,
+        ),
+        false,
+      );
+    }
 
     try {
       const res = await fetch(`/api/soal/${id}`, {
@@ -125,12 +117,11 @@ export default function BankSoalPage() {
         // Revert on error
         const result = await res.json();
         alert(result.error || "Gagal mengubah status soal");
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan jaringan.");
-      fetchData();
+      mutate();
     }
   };
 
@@ -230,7 +221,7 @@ export default function BankSoalPage() {
           setIsImportModalOpen(false);
           setImportFile(null);
           setImportParams({ id_guru: "", id_mapel: "", id_kelas: "" });
-          fetchData();
+          mutate();
         } else {
           alert(result.error || "Gagal melakukan import data");
         }
@@ -333,10 +324,13 @@ export default function BankSoalPage() {
     },
   ];
 
-  const filteredData = (Array.isArray(data) ? data : []).filter((item) => {
-    if (filterMapel && item.id_mapel?.toString() !== filterMapel) return false;
-    if (filterKelas && item.id_kelas?.toString() !== filterKelas) return false;
-    return true;
+  const dataToDisplay = Array.isArray(soalData) ? soalData : [];
+
+  const filteredData = dataToDisplay.filter((item) => {
+    let match = true;
+    if (filterMapel && item.id_mapel?.toString() !== filterMapel) match = false;
+    if (filterKelas && item.id_kelas?.toString() !== filterKelas) match = false;
+    return match;
   });
 
   const customFilters = (
@@ -388,7 +382,7 @@ export default function BankSoalPage() {
       <DataTable
         columns={columns}
         data={filteredData}
-        isLoading={loading}
+        isLoading={isLoading}
         searchable={true}
         pagination={true}
         customFilter={customFilters}

@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import { DataTable, Button, Modal } from "@/components/ui";
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export default function GuruMapelTable() {
-  const [data, setData] = useState([]);
-  const [allMapel, setAllMapel] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: guruMapelDataRaw, error, isLoading, mutate } = useSWR("/api/referensi/guru-mapel", fetcher);
+  const data = Array.isArray(guruMapelDataRaw) ? guruMapelDataRaw : [];
+  
+  const { data: mapelData } = useSWR("/api/mapel", fetcher);
+  const allMapel = Array.isArray(mapelData) ? [...mapelData].sort((a, b) => a.nama.localeCompare(b.nama)) : [];
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -16,40 +22,7 @@ export default function GuruMapelTable() {
   const [checkedMapel, setCheckedMapel] = useState([]);
   const [targetGuruId, setTargetGuruId] = useState("");
 
-  useEffect(() => {
-    fetchData();
-    fetchMapels();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/referensi/guru-mapel");
-      const json = await res.json();
-      if (Array.isArray(json)) {
-        setData(json);
-      } else {
-        console.error("API returned error:", json);
-        alert(`Gagal mengambil data: ${json.error || 'Unknown error'}`);
-        setData([]);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMapels = async () => {
-    try {
-      const res = await fetch("/api/mapel");
-      const json = await res.json();
-      const sortedMapel = json.sort((a, b) => a.nama.localeCompare(b.nama));
-      setAllMapel(sortedMapel);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  // Data fetching handled by SWR
 
   const handleOpenModal = (item) => {
     setSelectedGuru(item);
@@ -88,7 +61,7 @@ export default function GuruMapelTable() {
 
       if (res.ok) {
         setIsModalOpen(false);
-        fetchData();
+        mutate();
       } else {
         alert("Gagal menyimpan data");
       }
@@ -123,7 +96,7 @@ export default function GuruMapelTable() {
       if (res.ok) {
         alert(result.message || "Transfer berhasil");
         setIsTransferModalOpen(false);
-        fetchData();
+        mutate();
       } else {
         alert(result.error || "Gagal mentransfer data");
       }
@@ -216,7 +189,7 @@ export default function GuruMapelTable() {
       <DataTable
         columns={columns}
         data={data}
-        isLoading={loading}
+        isLoading={isLoading}
         // No add button, because Guru addition is managed in Master Data -> Guru
       />
 

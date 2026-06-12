@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { DashboardLayout } from "@/components/layout";
 import {
   DataTable,
@@ -12,11 +13,12 @@ import {
 } from "@/components/ui";
 import * as XLSX from "xlsx";
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export default function SiswaPage() {
-  const [data, setData] = useState([]);
+  const { data: siswaData, error, isLoading, mutate } = useSWR("/api/siswa", fetcher);
   const [kelasOptions, setKelasOptions] = useState([]);
   const [jurusanOptions, setJurusanOptions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -29,23 +31,11 @@ export default function SiswaPage() {
   const [isEdit, setIsEdit] = useState(false);
 
   useEffect(() => {
-    fetchData();
     fetchKelas();
     fetchJurusan();
   }, []);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/siswa");
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // fetchData handled by SWR
 
   const fetchKelas = async () => {
     try {
@@ -110,7 +100,7 @@ export default function SiswaPage() {
 
       if (res.ok) {
         setIsModalOpen(false);
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -163,7 +153,7 @@ export default function SiswaPage() {
           alert(result.message);
           setIsImportModalOpen(false);
           setImportFile(null);
-          fetchData();
+          mutate();
         } else {
           alert(result.error || "Gagal melakukan import data");
         }
@@ -186,7 +176,7 @@ export default function SiswaPage() {
         body: JSON.stringify({ action: "toggle_single", siswaId }),
       });
       if (res.ok) {
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -218,7 +208,7 @@ export default function SiswaPage() {
             ? `Berhasil mengaktifkan ${result.count || 0} user baru.`
             : "Berhasil menonaktifkan seluruh user siswa.",
         );
-        fetchData();
+        mutate();
       } else {
         alert(result.error || "Gagal melakukan aksi.");
       }
@@ -234,7 +224,7 @@ export default function SiswaPage() {
       });
       if (res.ok) {
         setIsConfirmOpen(false);
-        fetchData();
+        mutate();
       }
     } catch (err) {
       console.error(err);
@@ -323,8 +313,8 @@ export default function SiswaPage() {
 
       <DataTable
         columns={columns}
-        data={data}
-        isLoading={loading}
+        data={Array.isArray(siswaData) ? siswaData : []}
+        isLoading={isLoading}
         searchable={true}
         pagination={true}
         // using our custom Add button above
