@@ -27,7 +27,6 @@ export default function RootLayout({ children }) {
     <html
       lang="id"
       className={`${geistSans.variable} ${geistMono.variable} scroll-smooth`}
-      data-scroll-behavior="smooth"
     >
       <body suppressHydrationWarning className="bg-gray-50 text-gray-900">
         <Providers>{children}</Providers>

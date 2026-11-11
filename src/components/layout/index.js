@@ -4,19 +4,17 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { Modal, Button } from "@/components/ui";
 import {
   Menu,
   X,
   Home,
-  User,
+  Users,
   BookOpen,
   FileText,
   BarChart3,
   LogOut,
   ChevronDown,
   Clock,
-  GraduationCap,
 } from "lucide-react";
 
 /**
@@ -28,7 +26,7 @@ import {
 // SIDEBAR NAVIGATION
 // ============================================================================
 
-export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
+export function Sidebar({ isOpen, onClose }) {
   const pathname = usePathname();
   const [expandedMenu, setExpandedMenu] = useState(null);
 
@@ -47,7 +45,9 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
       submenu: [
         { label: "Siswa", href: "/dashboard/siswa" },
         { label: "Guru", href: "/dashboard/guru" },
-        { label: "Referensi", href: "/dashboard/referensi" },
+        { label: "Kelas", href: "/dashboard/kelas" },
+        { label: "Jurusan", href: "/dashboard/jurusan" },
+        { label: "Mapel", href: "/dashboard/mapel" },
       ],
     },
     {
@@ -66,34 +66,10 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
       submenu: [
         { label: "Hasil Ujian", href: "/dashboard/hasil-ujian" },
         { label: "Cetak Kartu", href: "/dashboard/cetak-kartu" },
-        { label: "Daftar Hadir", href: "/dashboard/daftar-hadir" },
+        { label: "Cetak Hasil Ujian", href: "/dashboard/cetak-hasil" },
       ],
     },
   ];
-
-  // Filter menu based on role
-  const filteredMenuItems = menuItems.filter((item) => {
-    if (userRole === "siswa") {
-      // Siswa only sees Dashboard (Beranda) and Jadwal Ujian
-      return item.id === "dashboard" || item.id === "jadwal-ujian";
-    }
-    if (userRole === "guru") {
-      // Guru sees everything EXCEPT jadwal-ujian and master-data
-      return item.id !== "jadwal-ujian" && item.id !== "master-data";
-    }
-    // Admin sees everything EXCEPT jadwal-ujian (they use Ujian instead)
-    return item.id !== "jadwal-ujian";
-  });
-
-  // Inject Jadwal Ujian item for siswa if not present
-  if (userRole === "siswa") {
-    filteredMenuItems.push({
-      id: "jadwal-ujian",
-      label: "Jadwal Ujian",
-      icon: Clock,
-      href: "/dashboard/jadwal-ujian",
-    });
-  }
 
   const toggleSubmenu = (id) => {
     setExpandedMenu(expandedMenu === id ? null : id);
@@ -113,16 +89,14 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-50 w-64 h-screen bg-white border-r border-gray-200 transform transition-transform duration-300 md:translate-x-0 print:hidden
+        className={`fixed left-0 top-0 z-50 w-64 h-screen bg-white border-r border-gray-200 transform transition-transform duration-300 md:relative md:translate-x-0
           ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">
-                <GraduationCap size={20} />
-              </span>
+              <span className="text-white font-bold text-sm">CBT</span>
             </div>
             <span className="text-lg font-bold text-gray-900">CBT System</span>
           </div>
@@ -136,7 +110,7 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
 
         {/* Menu Items */}
         <nav className="flex-1 overflow-y-auto py-4">
-          {filteredMenuItems.map((item) => (
+          {menuItems.map((item) => (
             <div key={item.id}>
               {item.submenu ? (
                 // Menu with submenu
@@ -202,8 +176,8 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
 
         {/* Footer */}
         <div className="border-t border-gray-200 p-4">
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
+          <button 
+            onClick={() => signOut({ callbackUrl: '/login' })}
             className="w-full flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
           >
             <LogOut size={20} />
@@ -220,9 +194,7 @@ export function Sidebar({ isOpen, onClose, userRole = "admin" }) {
 // ============================================================================
 
 export function TopBar({ onMenuClick, userName = "User" }) {
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [profileData, setProfileData] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [serverTime, setServerTime] = useState(new Date());
   const [isMounted, setIsMounted] = useState(false);
 
@@ -232,171 +204,73 @@ export function TopBar({ onMenuClick, userName = "User" }) {
     return () => clearInterval(timer);
   }, []);
 
-  const handleProfileClick = async () => {
-    setShowProfileModal(true);
-    if (!profileData) {
-      setLoadingProfile(true);
-      try {
-        const res = await fetch("/api/profile");
-        const data = await res.json();
-        setProfileData(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingProfile(false);
-      }
-    }
-  };
-
   const timeString = isMounted ? serverTime.toLocaleTimeString("id-ID") : "";
-  const dateString = isMounted
-    ? serverTime.toLocaleDateString("id-ID", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : "";
 
   return (
-    <>
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 print:hidden">
-        <div className="flex items-center justify-between px-6 h-16">
-          {/* Left Side */}
-          <button
-            onClick={onMenuClick}
-            className="md:hidden text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <Menu size={24} />
-          </button>
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <div className="flex items-center justify-between px-6 h-16">
+        {/* Left Side */}
+        <button
+          onClick={onMenuClick}
+          className="md:hidden text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <Menu size={24} />
+        </button>
 
-          {/* Middle - Empty Space */}
-          <div className="flex-1" />
+        {/* Middle - Empty Space */}
+        <div className="flex-1" />
 
-          {/* Right Side */}
-          <div className="flex items-center gap-6">
-            {/* Server Time & Date */}
-            <div className="hidden sm:flex flex-col items-end text-sm text-gray-600">
-              <span className="font-medium text-gray-800">{dateString}</span>
-              <div className="flex items-center gap-1">
-                <Clock size={14} />
-                <span>{timeString}</span>
-              </div>
-            </div>
-
-            {/* User Profile Avatar */}
-            <div className="relative">
-              <button
-                onClick={handleProfileClick}
-                className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-lg hover:ring-2 hover:ring-offset-2 hover:ring-emerald-500 transition-all focus:outline-none"
-                title="Profil Pengguna"
-              >
-                <User size={20} />
-              </button>
-            </div>
+        {/* Right Side */}
+        <div className="flex items-center gap-6">
+          {/* Server Time */}
+          <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600">
+            <Clock size={16} />
+            <span>{timeString}</span>
           </div>
-        </div>
-      </header>
 
-      {/* Profile Modal */}
-      <Modal
-        isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        title="Profil Pengguna"
-      >
-        <div className="p-4 flex flex-col items-center">
-          <div className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-3xl mb-4">
-            <User size={42} />
-          </div>
-          <h2 className="text-xl font-bold text-gray-900">{userName}</h2>
-
-          {loadingProfile ? (
-            <div className="mt-4 text-gray-500">Memuat data...</div>
-          ) : (
-            <div className="mt-6 w-full max-w-sm space-y-4 text-left">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm">
-                <div className="grid grid-cols-3 gap-2 py-2 border-b border-gray-200">
-                  <span className="text-gray-500">Tipe Akun</span>
-                  <span className="col-span-2 font-medium capitalize">
-                    {profileData?.role || "-"}
-                  </span>
-                </div>
-
-                {profileData?.role === "admin" && (
-                  <>
-                    <div className="grid grid-cols-3 gap-2 py-2 border-b border-gray-200">
-                      <span className="text-gray-500">Peran</span>
-                      <span className="col-span-2 font-medium">
-                        Administrator
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 py-2 border-gray-200">
-                      <span className="text-gray-500">Akses</span>
-                      <span className="col-span-2 font-medium">Seperuser</span>
-                    </div>
-                  </>
-                )}
-
-                {profileData?.role === "guru" && profileData.detail && (
-                  <>
-                    <div className="grid grid-cols-3 gap-2 py-2 border-b border-gray-200">
-                      <span className="text-gray-500">NIP</span>
-                      <span className="col-span-2 font-medium">
-                        {profileData.detail.nip}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 py-2">
-                      <span className="text-gray-500">Nama</span>
-                      <span className="col-span-2 font-medium">
-                        {profileData.detail.nama}
-                      </span>
-                    </div>
-                  </>
-                )}
-
-                {profileData?.role === "siswa" && profileData.detail && (
-                  <>
-                    <div className="grid grid-cols-3 gap-2 py-2 border-b border-gray-200">
-                      <span className="text-gray-500">NIM</span>
-                      <span className="col-span-2 font-medium">
-                        {profileData.detail.nim}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 py-2 border-b border-gray-200">
-                      <span className="text-gray-500">Nama</span>
-                      <span className="col-span-2 font-medium">
-                        {profileData.detail.nama}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 py-2 border-gray-200">
-                      <span className="text-gray-500">Kelas</span>
-                      <span className="col-span-2 font-medium">
-                        {profileData.detail.kelas?.nama_kelas || "-"}
-                      </span>
-                    </div>
-                  </>
-                )}
+          {/* User Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">
+                {userName.charAt(0).toUpperCase()}
               </div>
+              <span className="text-sm font-medium text-gray-900 hidden sm:block">
+                {userName}
+              </span>
+              <ChevronDown size={16} className="text-gray-600" />
+            </button>
 
-              <div className="mt-6 flex justify-end gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowProfileModal(false)}
+            {/* Dropdown Menu */}
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <a
+                  href="/profile"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  Tutup
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  Profil
+                </a>
+                <a
+                  href="/settings"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  Pengaturan
+                </a>
+                <hr className="my-1" />
+                <button
+                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
                 >
                   Logout
-                </Button>
+                </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </Modal>
-    </>
+      </div>
+    </header>
   );
 }
 
@@ -411,14 +285,10 @@ export function DashboardLayout({ children }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        userRole={session?.user?.role}
-      />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="md:ml-64 flex flex-col min-h-screen print:ml-0 print:bg-white">
+      <div className="md:ml-64 flex flex-col min-h-screen">
         {/* Top Bar */}
         <TopBar
           onMenuClick={() => setSidebarOpen(!sidebarOpen)}
@@ -426,12 +296,10 @@ export function DashboardLayout({ children }) {
         />
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-6 print:p-0 print:m-0">
-          {children}
-        </main>
+        <main className="flex-1 p-4 md:p-6">{children}</main>
 
         {/* Footer */}
-        <footer className="bg-white border-t border-gray-200 px-6 py-4 text-center text-sm text-gray-600 print:hidden">
+        <footer className="bg-white border-t border-gray-200 px-6 py-4 text-center text-sm text-gray-600">
           <p>&copy; 2026 CBT System. All rights reserved.</p>
         </footer>
       </div>
