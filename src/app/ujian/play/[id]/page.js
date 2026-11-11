@@ -33,7 +33,9 @@ export default function CBTPlayerPage({ params }) {
 
   // Soft-Lock States
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [violationCount, setViolationCount] = useState(0);
+  const [violationNotice, setViolationNotice] = useState(null);
+  const violationCountRef = useRef(0);
+  const hasLeftWindowRef = useRef(false);
   const MAX_VIOLATIONS = 3;
 
   // Use refs for autosave queue to prevent rapid firing
@@ -92,28 +94,24 @@ export default function CBTPlayerPage({ params }) {
       // Ignore if currently showing a native confirm dialog
       if (window.isConfirming) return;
 
-      // Only penalize if they are currently in fullscreen (meaning exam has started)
-      if (document.fullscreenElement) {
-        if (
-          e.type === "blur" ||
-          (e.type === "visibilitychange" && document.hidden)
-        ) {
-          setViolationCount((prev) => {
-            const next = prev + 1;
-            if (next >= MAX_VIOLATIONS) {
-              alert(
-                "PELANGGARAN MAKSIMAL! Anda telah keluar dari ujian terlalu sering. Ujian akan diselesaikan secara otomatis.",
-              );
-              handleAutoSubmit(); // trigger auto submit
-            } else {
-              alert(
-                `\nPERINGATAN! \nAnda terdeteksi keluar dari layar ujian atau membuka tab atau aplikasi lain.\n\nPelanggaran: ${next}/${MAX_VIOLATIONS}\nJika mencapai ${MAX_VIOLATIONS}, ujian akan ditutup otomatis!`,
-              );
-            }
-            return next;
-          });
-        }
+      const hasLeftWindow =
+        e.type === "blur" ||
+        (e.type === "visibilitychange" && document.hidden);
+      if (!hasLeftWindow) {
+        hasLeftWindowRef.current = false;
+        return;
       }
+
+      // Only penalize if they are currently in fullscreen (meaning exam has started)
+      if (!document.fullscreenElement || hasLeftWindowRef.current) return;
+      hasLeftWindowRef.current = true;
+
+      const next = violationCountRef.current + 1;
+      violationCountRef.current = next;
+      setViolationNotice({
+        count: next,
+        isFinal: next >= MAX_VIOLATIONS,
+      });
     };
     document.addEventListener("visibilitychange", handleVisibilityOrBlur);
     window.addEventListener("blur", handleVisibilityOrBlur);
@@ -343,6 +341,64 @@ export default function CBTPlayerPage({ params }) {
   const optionsList =
     jumlahPG >= 5 ? ["A", "B", "C", "D", "E"] : ["A", "B", "C", "D"];
 
+  const violationDialog = violationNotice && (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="violation-title"
+      aria-describedby="violation-description"
+    >
+      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-4 ring-amber-400/40">
+        <div
+          className={`px-6 py-6 text-center text-white ${
+            violationNotice.isFinal ? "bg-red-700" : "bg-amber-500"
+          }`}
+        >
+          <AlertTriangle className="mx-auto mb-3" size={52} strokeWidth={2.5} />
+          <h2 id="violation-title" className="text-2xl font-extrabold">
+            {violationNotice.isFinal ? "PELANGGARAN MAKSIMAL!" : "PERINGATAN!"}
+          </h2>
+        </div>
+        <div className="px-6 py-6 text-center">
+          <p
+            id="violation-description"
+            className="text-lg font-semibold leading-relaxed text-gray-900"
+          >
+            {violationNotice.isFinal
+              ? "Anda telah mencapai batas pelanggaran. Ujian harus dikirim sekarang."
+              : "Anda terdeteksi keluar dari layar ujian atau membuka tab/aplikasi lain."}
+          </p>
+          <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-base font-bold text-amber-900">
+            Pelanggaran: {violationNotice.count}/{MAX_VIOLATIONS}
+            {!violationNotice.isFinal &&
+              ". Jika mencapai batas, ujian akan ditutup otomatis."}
+          </p>
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={() => {
+              const isFinal = violationNotice.isFinal;
+              setViolationNotice(null);
+              if (isFinal) submitExam();
+            }}
+            className={`mt-6 w-full rounded-xl px-5 py-3 text-lg font-bold text-white shadow-lg transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+              violationNotice.isFinal
+                ? "bg-red-700 hover:bg-red-800"
+                : "bg-amber-600 hover:bg-amber-700"
+            }`}
+          >
+            {isSubmitting
+              ? "Mengirim ujian..."
+              : violationNotice.isFinal
+                ? "Kirim Ujian Sekarang"
+                : "Saya Mengerti"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (!isFullscreen) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-6 text-center text-white select-none">
@@ -372,6 +428,7 @@ export default function CBTPlayerPage({ params }) {
           <CheckCircle size={24} />
           Mulai / Lanjutkan Ujian
         </button>
+        {violationDialog}
       </div>
     );
   }
@@ -662,6 +719,7 @@ export default function CBTPlayerPage({ params }) {
           </div>
         </aside>
       </div>
+      {violationDialog}
     </div>
   );
 }

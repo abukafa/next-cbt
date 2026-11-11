@@ -223,7 +223,7 @@ const data = await apiRequest("/api/data");
 
 ```bash
 # Development
-npm run dev          # Start dev server at localhost:3000
+npm run dev          # Start dev server with Webpack at localhost:3000
 
 # Production
 npm run build        # Build for production

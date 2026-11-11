@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { DashboardLayout } from "@/components/layout";
 import {
   DataTable,
@@ -10,8 +11,6 @@ import {
   Input,
   ConfirmDialog,
 } from "@/components/ui";
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function GuruPage() {
   const { data: guruData, error, isLoading, mutate } = useSWR("/api/guru", fetcher);

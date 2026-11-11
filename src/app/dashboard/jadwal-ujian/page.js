@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout";
+import { fetcher } from "@/lib/fetcher";
 import {
   Clock,
   BookOpen,
@@ -14,27 +15,14 @@ import {
 } from "lucide-react";
 
 export default function JadwalUjianSiswaPage() {
-  const [jadwal, setJadwal] = useState([]);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    fetchJadwal();
-  }, []);
-
-  const fetchJadwal = async () => {
-    try {
-      const res = await fetch("/api/jadwal-ujian-siswa");
-      if (res.ok) {
-        const data = await res.json();
-        setJadwal(data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: jadwalData,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR("/api/jadwal-ujian-siswa", fetcher);
+  const jadwal = Array.isArray(jadwalData) ? jadwalData : [];
 
   const handleMulai = (id_tes, status, id_ikut_ujian) => {
     if (status === "tersedia") {
@@ -110,9 +98,16 @@ export default function JadwalUjianSiswaPage() {
         </p>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center p-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+        </div>
+      ) : error && !jadwalData ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-600">
+          <p>Gagal memuat jadwal ujian.</p>
+          <button onClick={() => mutate()} className="mt-3 underline">
+            Coba lagi
+          </button>
         </div>
       ) : jadwal.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">

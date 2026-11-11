@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { DashboardLayout } from "@/components/layout";
 import {
   DataTable,
@@ -13,10 +14,13 @@ import {
 } from "@/components/ui";
 import { useSession } from "next-auth/react";
 
-const fetcher = (url) => fetch(url).then((res) => res.json());
-
 export default function UjianPage() {
-  const { data: ujianData, error, isLoading, mutate } = useSWR("/api/ujian", fetcher);
+  const {
+    data: ujianData,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR("/api/ujian", fetcher);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
@@ -25,12 +29,41 @@ export default function UjianPage() {
   const userRole = session?.user?.role;
   const userKonId = parseInt(session?.user?.kon_id);
 
-  // Options
-  const [guruOptions, setGuruOptions] = useState([]);
-  const [mapelOptions, setMapelOptions] = useState([]);
-  const [kelasOptions, setKelasOptions] = useState([]);
-  const [jurusanOptions, setJurusanOptions] = useState([]);
-  const [guruMapelRelations, setGuruMapelRelations] = useState([]);
+  const { data: guruData } = useSWR("/api/guru", fetcher);
+  const { data: mapelData } = useSWR("/api/mapel", fetcher);
+  const { data: kelasData } = useSWR("/api/kelas", fetcher);
+  const { data: jurusanData } = useSWR("/api/jurusan", fetcher);
+  const { data: guruMapelData } = useSWR("/api/guru-mapel", fetcher);
+
+  const guruOptions = [
+    { value: "", label: "-- Pilih Guru --" },
+    ...(Array.isArray(guruData)
+      ? [...guruData].sort((a, b) => a.nama.localeCompare(b.nama))
+      : []
+    ).map((guru) => ({ value: guru.id.toString(), label: guru.nama })),
+  ];
+  const mapelOptions = [
+    { value: "", label: "-- Pilih Mapel --" },
+    ...(Array.isArray(mapelData)
+      ? [...mapelData].sort((a, b) => a.nama.localeCompare(b.nama))
+      : []
+    ).map((mapel) => ({ value: mapel.id.toString(), label: mapel.nama })),
+  ];
+  const kelasOptions = [
+    { value: "", label: "-- Pilih Kelas --" },
+    ...(Array.isArray(kelasData) ? kelasData : []).map((kelas) => ({
+      value: kelas.kelas,
+      label: kelas.kelas,
+    })),
+  ];
+  const jurusanOptions = [
+    { value: "", label: "-- Pilih Jurusan --" },
+    ...(Array.isArray(jurusanData) ? jurusanData : []).map((jurusan) => ({
+      value: jurusan.jurusan,
+      label: jurusan.jurusan,
+    })),
+  ];
+  const guruMapelRelations = Array.isArray(guruMapelData) ? guruMapelData : [];
 
   // Use datetime-local format for inputs (YYYY-MM-DDThh:mm)
   const formatDateTimeLocal = (dateString) => {
@@ -61,10 +94,6 @@ export default function UjianPage() {
   const [availableSoal, setAvailableSoal] = useState(null);
 
   useEffect(() => {
-    fetchOptions();
-  }, []);
-
-  useEffect(() => {
     if (formData.id_guru && formData.id_mapel && formData.kelas) {
       fetch("/api/ujian/check-soal", {
         method: "POST",
@@ -84,58 +113,6 @@ export default function UjianPage() {
       setAvailableSoal(null);
     }
   }, [formData.id_guru, formData.id_mapel, formData.kelas]);
-
-  // Data fetching handled by SWR
-
-  const fetchOptions = async () => {
-    try {
-      const [guruRes, mapelRes, kelasRes, jurusanRes, guruMapelRes] =
-        await Promise.all([
-          fetch("/api/guru").then((r) => r.json()),
-          fetch("/api/mapel").then((r) => r.json()),
-          fetch("/api/kelas").then((r) => r.json()),
-          fetch("/api/jurusan").then((r) => r.json()),
-          fetch("/api/guru-mapel").then((r) => r.json()),
-        ]);
-
-      setGuruMapelRelations(Array.isArray(guruMapelRes) ? guruMapelRes : []);
-
-      setGuruOptions([
-        { value: "", label: "-- Pilih Guru --" },
-        ...(Array.isArray(guruRes) ? guruRes : [])
-          .sort((a, b) => a.nama.localeCompare(b.nama))
-          .map((g) => ({
-            value: g.id.toString(),
-            label: g.nama,
-          })),
-      ]);
-      setMapelOptions([
-        { value: "", label: "-- Pilih Mapel --" },
-        ...(Array.isArray(mapelRes) ? mapelRes : [])
-          .sort((a, b) => a.nama.localeCompare(b.nama))
-          .map((m) => ({
-            value: m.id.toString(),
-            label: m.nama,
-          })),
-      ]);
-      setKelasOptions([
-        { value: "", label: "-- Pilih Kelas --" },
-        ...(Array.isArray(kelasRes) ? kelasRes : []).map((k) => ({
-          value: k.kelas,
-          label: k.kelas,
-        })),
-      ]);
-      setJurusanOptions([
-        { value: "", label: "-- Pilih Jurusan --" },
-        ...(Array.isArray(jurusanRes) ? jurusanRes : []).map((j) => ({
-          value: j.jurusan,
-          label: j.jurusan,
-        })),
-      ]);
-    } catch (err) {
-      console.error("Failed to fetch options", err);
-    }
-  };
 
   const handleOpenModal = (item = null) => {
     if (item) {
@@ -359,6 +336,7 @@ export default function UjianPage() {
         onClose={() => setIsModalOpen(false)}
         title={isEdit ? "Edit Ujian" : "Tambah Ujian"}
         size="lg"
+        className="max-h-[90vh] overflow-y-auto"
       >
         <form
           onSubmit={handleSubmit}

@@ -8,7 +8,7 @@ import {
   Menu,
   X,
   Home,
-  Users,
+  User,
   BookOpen,
   FileText,
   BarChart3,
@@ -29,6 +29,8 @@ import {
 export function Sidebar({ isOpen, onClose }) {
   const pathname = usePathname();
   const [expandedMenu, setExpandedMenu] = useState(null);
+  const { data: session } = useSession();
+  const role = session?.user?.role;
 
   // Menu items with nested structure
   const menuItems = [
@@ -37,40 +39,75 @@ export function Sidebar({ isOpen, onClose }) {
       label: "Dashboard",
       icon: Home,
       href: "/dashboard",
+      roles: ["admin", "guru", "siswa"],
     },
     {
       id: "master-data",
       label: "Master Data",
       icon: FileText,
+      roles: ["admin"],
       submenu: [
-        { label: "Siswa", href: "/dashboard/siswa" },
-        { label: "Guru", href: "/dashboard/guru" },
-        { label: "Kelas", href: "/dashboard/kelas" },
-        { label: "Jurusan", href: "/dashboard/jurusan" },
-        { label: "Mapel", href: "/dashboard/mapel" },
+        { label: "Siswa", href: "/dashboard/siswa", roles: ["admin"] },
+        { label: "Guru", href: "/dashboard/guru", roles: ["admin"] },
+        {
+          label: "Referensi",
+          href: "/dashboard/referensi",
+          roles: ["admin"],
+        },
       ],
     },
     {
       id: "ujian",
       label: "Ujian",
       icon: BookOpen,
+      roles: ["admin", "guru"],
       submenu: [
-        { label: "Bank Soal", href: "/dashboard/bank-soal" },
-        { label: "Ujian", href: "/dashboard/ujian" },
+        {
+          label: "Bank Soal",
+          href: "/dashboard/bank-soal",
+          roles: ["admin", "guru"],
+        },
+        {
+          label: "Ujian",
+          href: "/dashboard/ujian",
+          roles: ["admin", "guru"],
+        },
       ],
     },
     {
       id: "hasil",
       label: "Hasil",
       icon: BarChart3,
+      roles: ["admin", "guru"],
       submenu: [
-        { label: "Hasil Ujian", href: "/dashboard/hasil-ujian" },
-        { label: "Cetak Kartu", href: "/dashboard/cetak-kartu" },
-        { label: "Cetak Hasil Ujian", href: "/dashboard/cetak-hasil" },
+        {
+          label: "Hasil Ujian",
+          href: "/dashboard/hasil-ujian",
+          roles: ["admin", "guru"],
+        },
+        {
+          label: "Cetak Kartu",
+          href: "/dashboard/cetak-kartu",
+          roles: ["admin"],
+        },
       ],
+    },
+    {
+      id: "jadwal-ujian",
+      label: "Jadwal Ujian",
+      icon: Clock,
+      href: "/dashboard/jadwal-ujian",
+      roles: ["siswa"],
     },
   ];
 
+  const visibleMenuItems = menuItems
+    .filter((item) => item.roles.includes(role))
+    .map((item) => ({
+      ...item,
+      submenu: item.submenu?.filter((submenu) => submenu.roles.includes(role)),
+    }))
+    .filter((item) => !item.submenu || item.submenu.length > 0);
   const toggleSubmenu = (id) => {
     setExpandedMenu(expandedMenu === id ? null : id);
   };
@@ -89,7 +126,7 @@ export function Sidebar({ isOpen, onClose }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-50 w-64 h-screen bg-white border-r border-gray-200 transform transition-transform duration-300 md:relative md:translate-x-0
+        className={`fixed left-0 top-0 z-50 w-64 h-screen bg-white border-r border-gray-200 transform transition-transform duration-300 md:relative md:shrink-0 md:translate-x-0
           ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Logo */}
@@ -110,7 +147,7 @@ export function Sidebar({ isOpen, onClose }) {
 
         {/* Menu Items */}
         <nav className="flex-1 overflow-y-auto py-4">
-          {menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <div key={item.id}>
               {item.submenu ? (
                 // Menu with submenu
@@ -176,8 +213,8 @@ export function Sidebar({ isOpen, onClose }) {
 
         {/* Footer */}
         <div className="border-t border-gray-200 p-4">
-          <button 
-            onClick={() => signOut({ callbackUrl: '/login' })}
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
             className="w-full flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
           >
             <LogOut size={20} />
@@ -193,7 +230,7 @@ export function Sidebar({ isOpen, onClose }) {
 // TOP BAR / HEADER
 // ============================================================================
 
-export function TopBar({ onMenuClick, userName = "User" }) {
+export function TopBar({ onMenuClick, userName = "User", userRole }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [serverTime, setServerTime] = useState(new Date());
   const [isMounted, setIsMounted] = useState(false);
@@ -235,7 +272,8 @@ export function TopBar({ onMenuClick, userName = "User" }) {
               className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">
-                {userName.charAt(0).toUpperCase()}
+                <User size={20} className="text-white" />
+                {/* {userName.charAt(0).toUpperCase()} */}
               </div>
               <span className="text-sm font-medium text-gray-900 hidden sm:block">
                 {userName}
@@ -246,21 +284,24 @@ export function TopBar({ onMenuClick, userName = "User" }) {
             {/* Dropdown Menu */}
             {showDropdown && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                <a
-                  href="/profile"
+                <div className="border-b border-gray-100 px-4 py-3">
+                  <p className="truncate text-sm font-medium text-gray-900">
+                    {userName}
+                  </p>
+                  <p className="text-xs capitalize text-gray-500">
+                    {userRole || "Pengguna"}
+                  </p>
+                </div>
+                <Link
+                  href="/dashboard/profile"
+                  onClick={() => setShowDropdown(false)}
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   Profil
-                </a>
-                <a
-                  href="/settings"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  Pengaturan
-                </a>
+                </Link>
                 <hr className="my-1" />
                 <button
-                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  onClick={() => signOut({ callbackUrl: "/login" })}
                   className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
                 >
                   Logout
@@ -283,16 +324,17 @@ export function DashboardLayout({ children }) {
   const { data: session } = useSession();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 md:flex">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="md:ml-64 flex flex-col min-h-screen">
+      <div className="flex flex-1 flex-col min-w-0 min-h-screen">
         {/* Top Bar */}
         <TopBar
           onMenuClick={() => setSidebarOpen(!sidebarOpen)}
           userName={session?.user?.name || session?.user?.email || "User"}
+          userRole={session?.user?.role}
         />
 
         {/* Page Content */}

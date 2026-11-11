@@ -29,63 +29,104 @@ export async function GET(request) {
         ? { id_user: userId, tgl_mulai: { lt: now, gte: oneWeekAgo } }
         : { tgl_mulai: { lt: now, gte: oneWeekAgo } };
 
-    const ikutUjianStatusRaw = await prisma.trIkutUjian.groupBy({
-      by: ["status"],
-      where: ikutUjianWhere,
-      _count: { _all: true },
-    });
+    const [
+      ikutUjianStatusRaw,
+      ikutUjianTestRaw,
+      allMapels,
+      siswaData,
+      distinctGuru,
+      total_siswa,
+      guruMapelRaw,
+      siswaJurusanRaw,
+      bankSoalRaw,
+    ] = await Promise.all([
+      prisma.trIkutUjian.groupBy({
+        by: ["status"],
+        where: ikutUjianWhere,
+        _count: { _all: true },
+      }),
+      prisma.trIkutUjian.groupBy({
+        by: ["id_tes"],
+        where: ikutUjianWhere,
+        _count: { _all: true },
+      }),
+      prisma.mapel.findMany({ select: { id: true, nama: true } }),
+      role === "siswa"
+        ? prisma.siswa.findUnique({ where: { id: userId } })
+        : Promise.resolve(null),
+      role !== "siswa"
+        ? prisma.guru.findMany({ select: { nama: true }, distinct: ["nama"] })
+        : Promise.resolve([]),
+      role !== "siswa" ? prisma.siswa.count() : Promise.resolve(0),
+      role !== "siswa"
+        ? prisma.trGuruMapel.groupBy({
+            by: ["id_guru"],
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+      role !== "siswa"
+        ? prisma.siswa.groupBy({
+            by: ["jurusan"],
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+      role !== "siswa"
+        ? prisma.soal.groupBy({
+            by: ["id_mapel"],
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+    ]);
 
     const chart_status_ujian = ikutUjianStatusRaw.map((item) => ({
       name: item.status === "Y" ? "Selesai" : "Mengerjakan",
       value: item._count._all,
     }));
 
-    const ikutUjianTestRaw = await prisma.trIkutUjian.groupBy({
-      by: ["id_tes"],
-      where: ikutUjianWhere,
-      _count: { _all: true },
-    });
-
     // Map id_tes to nama_ujian
     const testIds = ikutUjianTestRaw.map((t) => t.id_tes);
-    const testDetails = await prisma.trGuruTes.findMany({
-      where: { id: { in: testIds } },
-      select: { id: true, nama_ujian: true, id_mapel: true, kelas: true },
-    });
-
-    // We need mapel for the chart labels and the table
-    const allMapels = await prisma.mapel.findMany();
-    const mapelMap = Object.fromEntries(allMapels.map((m) => [m.id, m.nama]));
-
-    const chart_ujian_test = ikutUjianTestRaw.map((item) => {
-      const tes = testDetails.find((t) => t.id === item.id_tes);
-      const mapelName = tes ? mapelMap[tes.id_mapel] || "Unknown" : "";
-      
-      return {
-        name: tes ? `${mapelName} (${tes.kelas})` : `Ujian ${item.id_tes}`,
-        Peserta: item._count._all,
-      };
-    });
-
-    // 3. Tabel: jadwal ujian -> tr_guru_tes (Currently Active Exams)
     let jadwalWhere = {};
     if (role === "siswa") {
-      const siswaData = await prisma.siswa.findUnique({ where: { id: userId } });
       if (siswaData) {
         jadwalWhere.kelas = siswaData.jurusan;
         jadwalWhere.jurusan = siswaData.id_jurusan;
       }
     }
 
-    const tabel_jadwal_raw = await prisma.trGuruTes.findMany({
-      where: {
-        ...jadwalWhere,
-        terlambat: { gte: oneWeekAgo },
-      },
-      orderBy: { tgl_mulai: "asc" },
-    });
+    const guruIds = guruMapelRaw.map((g) => g.id_guru);
+    const [testDetails, tabel_jadwal_raw, guruDetails] = await Promise.all([
+      testIds.length
+        ? prisma.trGuruTes.findMany({
+            where: { id: { in: testIds } },
+            select: { id: true, nama_ujian: true, id_mapel: true, kelas: true },
+          })
+        : Promise.resolve([]),
+      prisma.trGuruTes.findMany({
+        where: {
+          ...jadwalWhere,
+          terlambat: { gte: oneWeekAgo },
+        },
+        orderBy: { tgl_mulai: "asc" },
+      }),
+      guruIds.length
+        ? prisma.guru.findMany({
+            where: { id: { in: guruIds } },
+            select: { id: true, nama: true },
+          })
+        : Promise.resolve([]),
+    ]);
 
-    // Mapel already fetched above
+    // Mapel data was fetched with the initial dashboard queries.
+    const mapelMap = Object.fromEntries(allMapels.map((m) => [m.id, m.nama]));
+    const chart_ujian_test = ikutUjianTestRaw.map((item) => {
+      const tes = testDetails.find((t) => t.id === item.id_tes);
+      const mapelName = tes ? mapelMap[tes.id_mapel] || "Unknown" : "";
+
+      return {
+        name: tes ? `${mapelName} (${tes.kelas})` : `Ujian ${item.id_tes}`,
+        Peserta: item._count._all,
+      };
+    });
 
     const tabel_jadwal = tabel_jadwal_raw.map((j) => ({
       ...j,
@@ -102,24 +143,8 @@ export async function GET(request) {
     // ADMIN/GURU ONLY SECTION
     // ========================================================
     if (role !== "siswa") {
-      // Execute all aggregation queries in parallel
-      const [
-        distinctGuru,
-        total_siswa,
-        allMapelsForCard,
-        guruMapelRaw,
-        siswaJurusanRaw,
-        bankSoalRaw
-      ] = await Promise.all([
-        prisma.guru.findMany({ select: { nama: true }, distinct: ["nama"] }),
-        prisma.siswa.count(),
-        prisma.mapel.findMany({ select: { nama: true } }),
-        prisma.trGuruMapel.groupBy({ by: ["id_guru"], _count: { _all: true } }),
-        prisma.siswa.groupBy({ by: ["jurusan"], _count: { _all: true } }),
-        prisma.soal.groupBy({ by: ["id_mapel"], _count: { _all: true } })
-      ]);
-
       const total_guru = distinctGuru.length;
+      const allMapelsForCard = allMapels;
 
       const uniqueBaseMapels = new Set(
         allMapelsForCard.map((m) => {
@@ -129,13 +154,6 @@ export async function GET(request) {
         }),
       );
       const total_mapel = uniqueBaseMapels.size;
-
-      // Map details
-      const guruIds = guruMapelRaw.map((g) => g.id_guru);
-      const guruDetails = await prisma.guru.findMany({
-        where: { id: { in: guruIds } },
-        select: { id: true, nama: true },
-      });
 
       const chart_guru_mapel = guruMapelRaw.map((item) => {
         const guru = guruDetails.find((g) => g.id === item.id_guru);

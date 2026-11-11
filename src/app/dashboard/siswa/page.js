@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { DashboardLayout } from "@/components/layout";
 import {
   DataTable,
@@ -13,12 +14,10 @@ import {
 } from "@/components/ui";
 import * as XLSX from "xlsx";
 
-const fetcher = (url) => fetch(url).then((res) => res.json());
-
 export default function SiswaPage() {
   const { data: siswaData, error, isLoading, mutate } = useSWR("/api/siswa", fetcher);
-  const [kelasOptions, setKelasOptions] = useState([]);
-  const [jurusanOptions, setJurusanOptions] = useState([]);
+  const { data: kelasData } = useSWR("/api/kelas", fetcher);
+  const { data: jurusanData } = useSWR("/api/jurusan", fetcher);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -30,43 +29,20 @@ export default function SiswaPage() {
   const [formData, setFormData] = useState(initialForm);
   const [isEdit, setIsEdit] = useState(false);
 
-  useEffect(() => {
-    fetchKelas();
-    fetchJurusan();
-  }, []);
-
-  // fetchData handled by SWR
-
-  const fetchKelas = async () => {
-    try {
-      const res = await fetch("/api/kelas");
-      const json = await res.json();
-      const options = (Array.isArray(json) ? json : []).map((k) => ({
-        value: k.kelas,
-        label: k.kelas,
-      }));
-      setKelasOptions([{ value: "", label: "-- Pilih Kelas --" }, ...options]);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchJurusan = async () => {
-    try {
-      const res = await fetch("/api/jurusan");
-      const json = await res.json();
-      const options = (Array.isArray(json) ? json : []).map((k) => ({
-        value: k.jurusan,
-        label: k.jurusan,
-      }));
-      setJurusanOptions([
-        { value: "", label: "-- Pilih Jurusan --" },
-        ...options,
-      ]);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const kelasOptions = [
+    { value: "", label: "-- Pilih Kelas --" },
+    ...(Array.isArray(kelasData) ? kelasData : []).map((kelas) => ({
+      value: kelas.kelas,
+      label: kelas.kelas,
+    })),
+  ];
+  const jurusanOptions = [
+    { value: "", label: "-- Pilih Jurusan --" },
+    ...(Array.isArray(jurusanData) ? jurusanData : []).map((jurusan) => ({
+      value: jurusan.jurusan,
+      label: jurusan.jurusan,
+    })),
+  ];
 
   const handleOpenModal = (item = null) => {
     if (item) {

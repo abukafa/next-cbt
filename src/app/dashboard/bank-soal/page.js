@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { DashboardLayout } from "@/components/layout";
 import {
   DataTable,
@@ -12,11 +13,12 @@ import {
   Select,
 } from "@/components/ui";
 import * as XLSX from "xlsx";
-const fetcher = (url) => fetch(url).then((res) => res.json());
-
 export default function BankSoalPage() {
   const router = useRouter();
   const { data: soalData, error, isLoading, mutate } = useSWR("/api/soal", fetcher);
+  const { data: guruData } = useSWR("/api/guru", fetcher);
+  const { data: mapelData } = useSWR("/api/mapel", fetcher);
+  const { data: kelasData } = useSWR("/api/kelas", fetcher);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
@@ -33,49 +35,30 @@ export default function BankSoalPage() {
     id_kelas: "",
   });
 
-  const [guruOptions, setGuruOptions] = useState([]);
-  const [mapelOptions, setMapelOptions] = useState([]);
-  const [kelasOptions, setKelasOptions] = useState([]);
-
-  useEffect(() => {
-    fetchOptions();
-  }, []);
-
-  const fetchOptions = async () => {
-    try {
-      const [guruRes, mapelRes, kelasRes] = await Promise.all([
-        fetch("/api/guru").then((r) => r.json()),
-        fetch("/api/mapel").then((r) => r.json()),
-        fetch("/api/kelas").then((r) => r.json()),
-      ]);
-
-      setGuruOptions([
-        { value: "", label: "-- Pilih Guru --" },
-        ...(Array.isArray(guruRes) ? guruRes : []).map((g) => ({
-          value: g.id.toString(),
-          label: g.nama,
-        })),
-      ]);
-      setMapelOptions([
-        { value: "", label: "-- Pilih Mapel --" },
-        ...(Array.isArray(mapelRes) ? mapelRes : [])
-          .sort((a, b) => a.nama.localeCompare(b.nama))
-          .map((m) => ({
-            value: m.id.toString(),
-            label: m.nama,
-          })),
-      ]);
-      setKelasOptions([
-        { value: "", label: "-- Pilih Kelas --" },
-        ...(Array.isArray(kelasRes) ? kelasRes : []).map((k) => ({
-          value: k.id.toString(),
-          label: k.kelas,
-        })),
-      ]);
-    } catch (err) {
-      console.error("Failed to fetch options", err);
-    }
-  };
+  const guruOptions = [
+    { value: "", label: "-- Pilih Guru --" },
+    ...(Array.isArray(guruData) ? guruData : []).map((guru) => ({
+      value: guru.id.toString(),
+      label: guru.nama,
+    })),
+  ];
+  const mapelOptions = [
+    { value: "", label: "-- Pilih Mapel --" },
+    ...(Array.isArray(mapelData)
+      ? [...mapelData].sort((a, b) => a.nama.localeCompare(b.nama))
+      : []
+    ).map((mapel) => ({
+      value: mapel.id.toString(),
+      label: mapel.nama,
+    })),
+  ];
+  const kelasOptions = [
+    { value: "", label: "-- Pilih Kelas --" },
+    ...(Array.isArray(kelasData) ? kelasData : []).map((kelas) => ({
+      value: kelas.id.toString(),
+      label: kelas.kelas,
+    })),
+  ];
 
   // fetchData is now handled by SWR, so we remove the manual fetchData function.
 

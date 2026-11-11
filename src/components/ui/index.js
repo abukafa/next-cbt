@@ -105,7 +105,7 @@ export function Input({
         </label>
       )}
       <input
-        className={`w-full px-4 py-2 border border-gray-300 rounded-lg 
+        className={`w-full bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg
                      focus:outline-none focus:ring-2 focus:ring-emerald-500 
                      focus:border-transparent transition-colors
                      ${error ? "border-red-500 focus:ring-red-500" : ""}
@@ -135,7 +135,7 @@ export function Select({
         </label>
       )}
       <select
-        className={`w-full px-4 py-2 border border-gray-300 rounded-lg 
+        className={`w-full bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg
                      focus:outline-none focus:ring-2 focus:ring-emerald-500 
                      focus:border-transparent transition-colors
                      ${error ? "border-red-500 focus:ring-red-500" : ""}
@@ -171,7 +171,7 @@ export function TextArea({
       )}
       <textarea
         rows={rows}
-        className={`w-full px-4 py-2 border border-gray-300 rounded-lg 
+        className={`w-full bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg
                      focus:outline-none focus:ring-2 focus:ring-emerald-500 
                      focus:border-transparent transition-colors resize-none
                      ${error ? "border-red-500 focus:ring-red-500" : ""}
