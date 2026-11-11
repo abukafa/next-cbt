@@ -13,13 +13,13 @@ const generateToken = () => {
 
 export async function GET() {
   try {
-    const data = await prisma.trGuruTes.findMany({
-      orderBy: { id: "desc" },
-    });
-
-    // Fetch lookups
-    const gurus = await prisma.guru.findMany();
-    const mapels = await prisma.mapel.findMany();
+    const [data, gurus, mapels] = await Promise.all([
+      prisma.trGuruTes.findMany({
+        orderBy: { id: "desc" },
+      }),
+      prisma.guru.findMany({ select: { id: true, nama: true } }),
+      prisma.mapel.findMany({ select: { id: true, nama: true } }),
+    ]);
 
     const guruMap = Object.fromEntries(gurus.map((g) => [g.id, g.nama]));
     const mapelMap = Object.fromEntries(mapels.map((m) => [m.id, m.nama]));

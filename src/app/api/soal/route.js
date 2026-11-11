@@ -11,21 +11,25 @@ export async function GET() {
     if (session?.user?.role === "guru" && session?.user?.kon_id) {
       whereClause.id_guru = parseInt(session.user.kon_id);
     }
-    const soal = await prisma.soal.findMany({
-      where: whereClause,
-      orderBy: { id: "desc" },
-      select: {
-        id: true,
-        id_guru: true,
-        id_mapel: true,
-        id_kelas: true,
-        bobot: true,
-        tipe_file: true,
-        soal: true,
-        jawaban: true,
-        // Omit opsi_a, opsi_b, opsi_c, opsi_d, opsi_e to save massive payload
-      }
-    });
+    const [soal, gurus, mapels, kelas] = await Promise.all([
+      prisma.soal.findMany({
+        where: whereClause,
+        orderBy: { id: "desc" },
+        select: {
+          id: true,
+          id_guru: true,
+          id_mapel: true,
+          id_kelas: true,
+          bobot: true,
+          tipe_file: true,
+          soal: true,
+          jawaban: true,
+        },
+      }),
+      prisma.guru.findMany({ select: { id: true, nama: true } }),
+      prisma.mapel.findMany({ select: { id: true, nama: true } }),
+      prisma.kelas.findMany({ select: { id: true, kelas: true } }),
+    ]);
 
     // We can also strip the HTML of `soal` directly on the server to save even more bytes
     // so the client doesn't download the massive HTML/Base64 strings if present.
@@ -37,11 +41,6 @@ export async function GET() {
       };
     });
     
-    // Fetch lookup tables
-    const gurus = await prisma.guru.findMany();
-    const mapels = await prisma.mapel.findMany();
-    const kelas = await prisma.kelas.findMany();
-
     const guruMap = Object.fromEntries(gurus.map(g => [g.id, g.nama]));
     const mapelMap = Object.fromEntries(mapels.map(m => [m.id, m.nama]));
     const kelasMap = Object.fromEntries(kelas.map(k => [k.id, k.kelas]));

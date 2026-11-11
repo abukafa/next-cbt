@@ -11,6 +11,7 @@
 
 html {
   height: 100%;
+  color-scheme: light;
 }
 
 html,
@@ -98,11 +99,5 @@ a {
 
   .text-muted {
     @apply text-gray-600;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
   }
 }

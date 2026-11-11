@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { DashboardLayout } from "@/components/layout";
 import { BookOpen, User, Calendar, Users, Eye, Search } from "lucide-react";
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function HasilUjianPage() {
   const [searchTerm, setSearchTerm] = useState("");

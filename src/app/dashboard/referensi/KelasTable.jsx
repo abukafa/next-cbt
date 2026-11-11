@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { useSession } from "next-auth/react";
 import { DataTable, Button, Modal, Input, ConfirmDialog } from "@/components/ui";
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function KelasTable() {
   const { data: session } = useSession();

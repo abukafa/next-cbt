@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, use } from "react";
+import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout";
+import { fetcher } from "@/lib/fetcher";
 import {
   ChevronLeft,
   BookOpen,
@@ -22,30 +24,17 @@ export default function DetailHasilUjianPage({ params }) {
   const router = useRouter();
   const { data: session } = useSession();
 
-  const [data, setData] = useState(null);
-  const [participants, setParticipants] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [processingId, setProcessingId] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [id]);
-
-  const fetchData = async () => {
-    try {
-      const res = await fetch(`/api/hasil-ujian/${id}`);
-      if (res.ok) {
-        const json = await res.json();
-        setData(json.tes);
-        setParticipants(json.participants);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: resultData,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR(id ? `/api/hasil-ujian/${id}` : null, fetcher);
+  const data = resultData?.tes;
+  const participants = resultData?.participants || [];
 
   const handleAction = async (action, id_ikut_ujian, studentName) => {
     let confirmMsg = "";
@@ -67,8 +56,7 @@ export default function DetailHasilUjianPage({ params }) {
       const result = await res.json();
 
       if (res.ok) {
-        // Refresh data
-        await fetchData();
+        await mutate();
       } else {
         alert(result.error || "Gagal memproses aksi");
       }
@@ -114,7 +102,7 @@ export default function DetailHasilUjianPage({ params }) {
             <Printer size={18} /> Cetak
           </button>
           <button
-            onClick={fetchData}
+            onClick={() => mutate()}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
             <RefreshCw size={18} /> Refresh
@@ -122,13 +110,15 @@ export default function DetailHasilUjianPage({ params }) {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center p-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
         </div>
       ) : !data ? (
         <div className="bg-white rounded-lg p-12 text-center shadow-sm">
-          <p className="text-gray-500">Data ujian tidak ditemukan.</p>
+          <p className="text-gray-500">
+            {error?.message || "Data ujian tidak ditemukan."}
+          </p>
         </div>
       ) : (
         <>

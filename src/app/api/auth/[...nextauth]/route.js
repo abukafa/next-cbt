@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcrypt";
 import crypto from "crypto";
 
 export const authOptions = {
@@ -22,16 +23,21 @@ export const authOptions = {
         });
 
         if (!user) {
+          console.warn("[auth] Credentials rejected: admin account not found");
           return null;
         }
 
-        // Database lama menggunakan MD5 murni tanpa salt
-        const md5Hash = crypto
-          .createHash("md5")
-          .update(credentials.password)
-          .digest("hex");
+        const isBcryptHash = /^\$2[aby]\$/.test(user.password);
+        const isPasswordValid = isBcryptHash
+          ? await bcrypt.compare(credentials.password, user.password)
+          : crypto
+              .createHash("md5")
+              .update(credentials.password)
+              .digest("hex")
+              .toLowerCase() === user.password.toLowerCase();
 
-        if (md5Hash !== user.password) {
+        if (!isPasswordValid) {
+          console.warn("[auth] Credentials rejected: password hash mismatch");
           return null;
         }
 

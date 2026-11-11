@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { DataTable, Button, Modal } from "@/components/ui";
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function GuruMapelTable() {
   const { data: guruMapelDataRaw, error, isLoading, mutate } = useSWR("/api/referensi/guru-mapel", fetcher);

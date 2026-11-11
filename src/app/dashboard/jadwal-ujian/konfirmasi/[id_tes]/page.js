@@ -1,39 +1,26 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, use } from "react";
+import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout";
+import { fetcher } from "@/lib/fetcher";
 import { Clock, BookOpen, User, Key, AlertTriangle } from "lucide-react";
 
 export default function KonfirmasiUjianPage({ params }) {
   const { id_tes } = use(params);
   const router = useRouter();
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [token, setToken] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    fetchData();
-  }, [id_tes]);
-
-  const fetchData = async () => {
-    try {
-      const res = await fetch(`/api/jadwal-ujian-siswa/${id_tes}`);
-      const json = await res.json();
-      if (res.ok) {
-        setData(json);
-      } else {
-        setError(json.error || "Gagal mengambil data");
-      }
-    } catch (err) {
-      setError("Terjadi kesalahan jaringan.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data,
+    error,
+    isLoading,
+  } = useSWR(
+    id_tes ? `/api/jadwal-ujian-siswa/${id_tes}` : null,
+    fetcher,
+  );
 
   const handleMulai = async (e) => {
     e.preventDefault();
@@ -69,7 +56,7 @@ export default function KonfirmasiUjianPage({ params }) {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <DashboardLayout>
         <div className="flex justify-center p-12">
@@ -79,14 +66,14 @@ export default function KonfirmasiUjianPage({ params }) {
     );
   }
 
-  if (error) {
+  if (error && !data) {
     return (
       <DashboardLayout>
         <div className="bg-red-50 text-red-600 p-6 rounded-lg border border-red-200">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <AlertTriangle /> Error
           </h2>
-          <p>{error}</p>
+          <p>{error.message}</p>
           <button
             onClick={() => router.push("/dashboard/jadwal-ujian")}
             className="mt-4 px-4 py-2 bg-red-100 hover:bg-red-200 rounded-md transition-colors"

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { DashboardLayout } from "@/components/layout";
 import { StatCard } from "@/components/ui";
 import { Users, BookOpen, FileText } from "lucide-react";
@@ -30,8 +31,6 @@ const COLORS = [
   "#14b8a6",
   "#f97316",
 ];
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function DashboardPage() {
   const { data: session } = useSession();
