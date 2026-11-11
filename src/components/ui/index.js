@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React from "react";
 
 /**
  * CBT Application - Tailwind Component Library
@@ -210,70 +210,10 @@ export function DataTable({
   onDeleteAll,
   isLoading = false,
   className = "",
-  searchable = false,
-  pagination = false,
-  customFilter = null,
 }) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  // Filter Data
-  const filteredData = useMemo(() => {
-    let result = Array.isArray(data) ? data : [];
-    if (searchable && searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase();
-      result = result.filter((row) => {
-        return Object.values(row).some((val) =>
-          String(val).toLowerCase().includes(lowerSearch)
-        );
-      });
-    }
-    return result;
-  }, [data, searchable, searchTerm]);
-
-  // Sort Data
-  const sortedData = useMemo(() => {
-    let sortableItems = [...filteredData];
-    if (sortConfig !== null) {
-      sortableItems.sort((a, b) => {
-        const aVal = a[sortConfig.key] || "";
-        const bVal = b[sortConfig.key] || "";
-        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [filteredData, sortConfig]);
-
-  // Paginate Data
-  const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize));
-  const actualPage = Math.max(1, Math.min(Number(currentPage) || 1, totalPages));
-
-  const paginatedData = useMemo(() => {
-    if (!pagination) return sortedData;
-    const start = (actualPage - 1) * pageSize;
-    return sortedData.slice(start, start + pageSize);
-  }, [sortedData, pagination, actualPage, pageSize]);
-
-  const requestSort = (key) => {
-    let direction = "asc";
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  // Reset page when data/search changes
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [filteredData.length, pageSize]);
-
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col ${className}`}
+      className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden ${className}`}
     >
       {/* Header */}
       {title && (
@@ -282,148 +222,65 @@ export function DataTable({
         </div>
       )}
 
-      {/* Toolbar & Filter */}
-      {(onAdd || onImport || onDeleteAll || searchable || pagination) && (
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between items-center">
-          <div className="flex gap-2 flex-wrap">
-            {onAdd && (
-              <Button size="sm" onClick={onAdd}>
-                + Tambah
-              </Button>
-            )}
-            {onImport && (
-              <Button size="sm" variant="secondary" onClick={onImport}>
-                ⬇ Import
-              </Button>
-            )}
-            {onDeleteAll && (
-              <Button size="sm" variant="danger" onClick={onDeleteAll}>
-                🗑 Hapus Semua
-              </Button>
-            )}
-          </div>
-
-          <div className="flex gap-4 items-center w-full sm:w-auto">
-            {customFilter}
-            {searchable && (
-              <input
-                type="text"
-                placeholder="Cari data..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full sm:w-64 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-emerald-500"
-              />
-            )}
-            {pagination && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span>Tampilkan</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => setPageSize(Number(e.target.value))}
-                  className="border border-gray-300 rounded p-1"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-                <span>baris</span>
-              </div>
-            )}
-          </div>
+      {/* Toolbar */}
+      {(onAdd || onImport || onDeleteAll) && (
+        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex gap-2 flex-wrap">
+          {onAdd && (
+            <Button size="sm" onClick={onAdd}>
+              + Tambah
+            </Button>
+          )}
+          {onImport && (
+            <Button size="sm" variant="secondary" onClick={onImport}>
+              ⬇ Import
+            </Button>
+          )}
+          {onDeleteAll && (
+            <Button size="sm" variant="danger" onClick={onDeleteAll}>
+              🗑 Hapus Semua
+            </Button>
+          )}
         </div>
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className={`px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 select-none ${col.className || ""}`}
-                  style={{ width: col.width }}
-                  onClick={() => requestSort(col.key)}
-                >
-                  <div className="flex items-center gap-1">
+      {isLoading ? (
+        <div className="px-6 py-8 text-center">
+          <LoadingSpinner />
+        </div>
+      ) : data.length === 0 ? (
+        <EmptyState message="Tidak ada data" />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                {columns.map((col) => (
+                  <th
+                    key={col.key}
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+                    style={{ width: col.width }}
+                  >
                     {col.label}
-                    {sortConfig?.key === col.key && (
-                      <span className="text-gray-400">
-                        {sortConfig.direction === "asc" ? " 🔼" : " 🔽"}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {isLoading ? (
-              <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center">
-                  <LoadingSpinner />
-                </td>
+                  </th>
+                ))}
               </tr>
-            ) : !Array.isArray(paginatedData) || paginatedData.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center">
-                  <EmptyState message="Tidak ada data ditemukan" />
-                </td>
-              </tr>
-            ) : (
-              paginatedData.map((row, idx) => (
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {data.map((row, idx) => (
                 <tr key={idx} className="hover:bg-gray-50 transition-colors">
                   {columns.map((col) => (
                     <td
                       key={`${idx}-${col.key}`}
-                      className={`px-6 py-4 text-sm text-gray-900 ${col.className || ""}`}
+                      className="px-6 py-4 text-sm text-gray-900"
                     >
                       {col.render ? col.render(row) : row[col.key]}
                     </td>
                   ))}
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination Footer */}
-      {pagination && totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
-          <span className="text-sm text-gray-600">
-            Halaman {actualPage} dari {totalPages}
-          </span>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setCurrentPage((prev) => Math.max(Number(prev) - 1, 1))}
-              disabled={actualPage === 1}
-            >
-              Prev
-            </Button>
-            
-            <input
-              type="number"
-              min={1}
-              max={totalPages}
-              value={currentPage}
-              onChange={(e) => setCurrentPage(e.target.value)}
-              onBlur={() => setCurrentPage(actualPage)}
-              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded text-center focus:outline-none focus:border-emerald-500"
-            />
-
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setCurrentPage((prev) => Math.min(Number(prev) + 1, totalPages))}
-              disabled={actualPage === totalPages}
-            >
-              Next
-            </Button>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
@@ -471,7 +328,7 @@ export function Modal({
         )}
 
         {/* Body */}
-        <div className="px-6 py-4 overflow-y-auto max-h-[70vh]">{children}</div>
+        <div className="px-6 py-4">{children}</div>
 
         {/* Footer */}
         {footer && (
